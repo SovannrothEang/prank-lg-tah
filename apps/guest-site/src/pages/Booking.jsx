@@ -11,8 +11,11 @@ const Booking = () => {
   const [formData, setFormData] = useState({
     guest_name: '',
     guest_email: '',
+    phone_number: '',
+    telegram: '',
     check_in_date: '',
     check_out_date: '',
+    special_requests: '',
     room_id: roomInfo.roomId || ''
   });
 
@@ -31,7 +34,7 @@ const Booking = () => {
           <span className="text-amber-200 tracking-[0.4em] uppercase text-[10px] block mb-6">Reservation Pending</span>
           <h2 className="text-5xl font-serif text-stone-50 mb-8">Thank You, {formData.guest_name.split(' ')[0]}.</h2>
           <p className="text-stone-400 mb-12 max-w-md mx-auto leading-relaxed">
-            Our concierge will review your request for the <span className="text-stone-50 italic">{roomInfo.roomType}</span> and contact you shortly.
+            Our concierge will contact you via <span className="text-stone-50">Telegram (@{formData.telegram})</span> or phone to confirm your stay.
           </p>
           <button onClick={() => navigate('/')} className="luxury-button">
             Return to Elysian
@@ -62,7 +65,7 @@ const Booking = () => {
                 </div>
                 <div className="h-px bg-stone-800 w-full mb-8" />
                 <p className="text-stone-400 text-sm leading-relaxed">
-                    Complimentary high-speed connectivity, bespoke concierge service, and access to the Elysian Wellness Club included with every stay.
+                    Once submitted, our team will verify availability. We prioritize contact via Telegram for faster confirmation.
                 </p>
             </div>
           </motion.div>
@@ -78,32 +81,51 @@ const Booking = () => {
                 <div className="group">
                     <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Your Name</label>
                     <input 
-                        type="text" 
-                        required
-                        placeholder="ALEXANDER VANCE"
-                        className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest placeholder:text-stone-800"
+                        type="text" required placeholder="ALEXANDER VANCE"
+                        className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest"
                         value={formData.guest_name}
                         onChange={(e) => setFormData({...formData, guest_name: e.target.value})}
                     />
                 </div>
+                
+                <div className="grid grid-cols-2 gap-12">
+                  <div className="group">
+                      <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Telegram Handle</label>
+                      <input 
+                          type="text" required placeholder="@USERNAME"
+                          className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest"
+                          value={formData.telegram}
+                          onChange={(e) => setFormData({...formData, telegram: e.target.value})}
+                      />
+                  </div>
+                  <div className="group">
+                      <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Phone Number</label>
+                      <input 
+                          type="tel" required placeholder="+855 ..."
+                          className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest"
+                          value={formData.phone_number}
+                          onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                      />
+                  </div>
+                </div>
+
                 <div className="group">
-                    <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Email Address</label>
+                    <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Email Address (Optional)</label>
                     <input 
-                        type="email" 
-                        required
+                        type="email"
                         placeholder="VANCE@HOTMAIL.COM"
-                        className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest placeholder:text-stone-800"
+                        className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest"
                         value={formData.guest_email}
                         onChange={(e) => setFormData({...formData, guest_email: e.target.value})}
                     />
                 </div>
+
                 <div className="grid grid-cols-2 gap-12">
                     <div className="group">
                         <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Arrival</label>
                         <input 
-                            type="date" 
-                            required
-                            className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest invert dark:invert-0"
+                            type="date" required
+                            className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50"
                             value={formData.check_in_date}
                             onChange={(e) => setFormData({...formData, check_in_date: e.target.value})}
                         />
@@ -111,22 +133,27 @@ const Booking = () => {
                     <div className="group">
                         <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Departure</label>
                         <input 
-                            type="date" 
-                            required
-                            className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50 uppercase tracking-widest invert dark:invert-0"
+                            type="date" required
+                            className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-amber-200 text-stone-50"
                             value={formData.check_out_date}
                             onChange={(e) => setFormData({...formData, check_out_date: e.target.value})}
                         />
                     </div>
                 </div>
+
+                <div className="group">
+                    <label className="block text-[10px] uppercase tracking-[0.4em] mb-4 text-stone-500 group-focus-within:text-amber-200 transition-colors">Special Requests</label>
+                    <textarea 
+                        className="w-full bg-transparent border border-stone-800 p-4 focus:outline-none focus:border-amber-200 text-stone-50 h-32"
+                        value={formData.special_requests}
+                        onChange={(e) => setFormData({...formData, special_requests: e.target.value})}
+                    />
+                </div>
             </div>
             
             <button type="submit" className="w-full luxury-button bg-stone-50 text-zinc-950 font-bold hover:bg-amber-200">
-                Confirm Reservation
+                Submit Reservation Request
             </button>
-            <p className="text-center text-[10px] text-stone-600 uppercase tracking-widest">
-                By clicking confirm, you agree to our Terms of Residence.
-            </p>
           </motion.form>
         </div>
       </div>

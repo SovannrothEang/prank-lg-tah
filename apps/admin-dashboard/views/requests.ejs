@@ -1,37 +1,108 @@
 <%- include('partials/header') %>
 
-<div class="mb-4">
-    <h2>Online Book Requests</h2>
-    <p class="text-muted">Manage guest requests submitted via the website.</p>
+<div class="mb-5">
+    <h2 class="font-serif">Online Guest Requests</h2>
+    <p class="text-muted small uppercase tracking-widest">Digital Verification Required</p>
 </div>
 
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th>Guest</th>
-            <th>Room Preference</th>
-            <th>Dates</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% if (requests.length === 0) { %>
-            <tr><td colspan="5" class="text-center py-4">No pending requests</td></tr>
-        <% } %>
-        <% requests.forEach(request => { %>
-        <tr>
-            <td><%= request.guest_name %><br><small><%= request.guest_email %></small></td>
-            <td>Room ID: <%= request.room_id %></td>
-            <td><%= request.check_in_date %> to <%= request.check_out_date %></td>
-            <td><span class="badge bg-warning text-dark status-badge"><%= request.status %></span></td>
-            <td>
-                <button class="btn btn-sm btn-outline-success">Approve</button>
-                <button class="btn btn-sm btn-outline-danger">Reject</button>
-            </td>
-        </tr>
-        <% }) %>
-    </tbody>
-</table>
+<div class="card overflow-hidden border-0 shadow-sm">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-dark text-white text-[10px] uppercase tracking-widest">
+            <tr>
+                <th class="ps-4 py-3">Guest Contact</th>
+                <th class="py-3">Residency</th>
+                <th class="py-3">Stay Data</th>
+                <th class="py-3 text-end pe-4">Decisions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% requests.forEach(request => { %>
+            <tr>
+                <td class="ps-4">
+                    <div class="fw-bold"><%= request.guest_name %></div>
+                    <div class="text-[10px] text-primary">TELEGRAM: <%= request.telegram %></div>
+                </td>
+                <td>
+                    <div class="small fw-bold"><%= request.type_name %></div>
+                    <div class="text-[10px] text-muted">BASE: $<%= request.base_price %>/NIGHT</div>
+                </td>
+                <td>
+                    <div class="small"><%= request.check_in_date %> <span class="text-muted">→</span> <%= request.check_out_date %></div>
+                </td>
+                <td class="text-end pe-4">
+                    <% if (request.status === 'pending') { %>
+                        <button class="btn btn-sm btn-dark px-4" onclick="previewRequest('<%= JSON.stringify(request) %>')">Review & Sync</button>
+                    <% } else { %>
+                        <span class="badge status-badge <%= request.status === 'approved' ? 'bg-success' : 'bg-danger' %>"><%= request.status %></span>
+                    <% } %>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-serif">Invoice Verification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="bg-light p-4 rounded mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small text-muted">Stay Duration</span>
+                        <span id="p_nights" class="fw-bold">--</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small text-muted">Rate</span>
+                        <span id="p_rate" class="fw-bold">--</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mt-3">
+                        <h6 class="font-serif">Total Due</h6>
+                        <h4 class="font-serif text-success" id="p_total">--</h4>
+                    </div>
+                </div>
+                <p class="text-[10px] text-muted text-center uppercase tracking-widest mb-0">
+                    Synchronizing with room inventory status...
+                </p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <form id="approveForm" method="POST" class="w-100 d-flex gap-2">
+                    <button type="submit" class="btn btn-success flex-grow-1 py-2">Approve & Book</button>
+                    <button type="button" id="rejectBtn" class="btn btn-outline-danger flex-grow-1 py-2">Reject Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewRequest(data) {
+    const r = JSON.parse(data);
+    const start = new Date(r.check_in_date);
+    const end = new Date(r.check_out_date);
+    const nights = Math.max(Math.ceil((end - start) / (1000 * 60 * 60 * 24)), 1);
+    
+    document.getElementById('p_nights').innerText = nights + ' Night(s)';
+    document.getElementById('p_rate').innerText = '$' + r.base_price + '/night';
+    document.getElementById('p_total').innerText = '$' + r.total_price.toFixed(2);
+    
+    document.getElementById('approveForm').action = '/requests/' + r.id + '/approve';
+    
+    document.getElementById('rejectBtn').onclick = () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/requests/' + r.id + '/reject';
+        document.body.appendChild(form);
+        form.submit();
+    };
+
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+</script>
 
 <%- include('partials/footer') %>

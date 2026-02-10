@@ -22,7 +22,14 @@
             <td><%= booking.room_number %></td>
             <td><%= booking.check_in_date %> to <%= booking.check_out_date %></td>
             <td>$<%= booking.total_price %></td>
-            <td><span class="badge bg-success status-badge"><%= booking.status %></span></td>
+            <td>
+                <% if (booking.status === 'approved') { %>
+                    <span class="badge bg-success">Approved</span>
+                <% } else if (booking.status === 'rejected') { %>
+                    <span class="badge bg-danger">Rejected</span>
+                <% } %>
+            </td>
+            <td><a href="/bookings/<%= booking.id %>/invoice" class="btn btn-sm btn-outline-dark">Invoice</a></td>
         </tr>
         <% }) %>
     </tbody>

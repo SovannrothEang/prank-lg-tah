@@ -1,36 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
 const Restaurant = () => {
   const [category, setCategory] = useState('food');
+  const [menu, setMenu] = useState({ food: [], deserts: [], wine: [] });
+  const [loading, setLoading] = useState(true);
 
-  const menu = {
-    food: [
-      { name: 'Oysters Rockefeller', price: 42, desc: 'Baked on the half shell with spinach, breadcrumbs, and herbs.' },
-      { name: 'Beef Wellington', price: 110, desc: 'A traditional centerpiece with prime grass-fed beef.' },
-      { name: 'Truffle Risotto', price: 55, desc: 'Acquerello rice, seasonal black truffle, and aged parmesan.' }
-    ],
-    deserts: [
-      { name: 'Grand Marnier Soufflé', price: 24, desc: 'Served with vanilla bean crème anglaise.' },
-      { name: 'Chocolate Fondant', price: 22, desc: '70% dark chocolate, salted caramel heart.' }
-    ],
-    wine: [
-      { name: 'Krug Grande Cuvée', price: 380, desc: 'The archetype of Krug’s philosophy.' },
-      { name: 'Opus One 2018', price: 650, desc: 'Napa Valley legendary Bordeaux-style blend.' }
-    ]
-  };
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/restaurant/menu').then(res => {
+      const organized = res.data.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      }, { food: [], deserts: [], wine: [] });
+      setMenu(organized);
+      setLoading(false);
+    });
+  }, []);
 
   const images = {
-    food: "https://images.unsplash.com/photo-1550966841-3ee32ba213e7?q=80&w=2070&auto=format&fit=crop",
+    food: "https://images.unsplash.com/photo-1550966841-3ee32ba213e7?q=80&w=2080&auto=format&fit=crop",
     deserts: "https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=1964&auto=format&fit=crop",
     wine: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop"
   };
+
+  if (loading) return <div className="h-screen bg-zinc-950 flex items-center justify-center font-serif text-amber-200 animate-pulse uppercase tracking-widest">Designing the Menu</div>;
 
   return (
     <div className="bg-zinc-950 min-h-screen">
       <div className="grain" />
       
-      {/* Editorial Header */}
       <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.img 
@@ -77,20 +77,11 @@ const Restaurant = () => {
                 <div className="flex-grow mx-4 border-b border-stone-800 border-dotted" />
                 <span className="font-serif text-xl text-stone-400 italic">${item.price}</span>
               </div>
-              <p className="text-stone-500 text-sm leading-relaxed max-w-sm">{item.desc}</p>
+              <p className="text-stone-500 text-sm leading-relaxed max-w-sm">{item.desc || item.description}</p>
             </div>
           ))}
         </motion.div>
       </div>
-
-      {/* Reservation CTA */}
-      <section className="py-32 bg-stone-50 text-zinc-950 text-center">
-        <h2 className="text-4xl font-serif mb-8">Secure Your Table</h2>
-        <p className="text-zinc-500 mb-12 max-w-md mx-auto">Reservations are highly recommended to ensure the full Elysian experience.</p>
-        <button className="luxury-button border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white">
-          Book Table
-        </button>
-      </section>
     </div>
   );
 };
