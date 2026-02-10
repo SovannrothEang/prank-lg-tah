@@ -1,103 +1,99 @@
-<%- include('partials/header') %>
+<%- include('partials/header'); %>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
-        <h2 class="font-serif mb-1">Executive Dashboard</h2>
-        <p class="text-muted small uppercase tracking-widest">Hotel Performance & Health</p>
-    </div>
-    <div class="text-end">
-        <div class="fw-bold"><%= new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></div>
-        <div class="text-[10px] text-success font-bold uppercase tracking-widest">● System Synchronized</div>
+        <h2 class="font-serif text-dark tracking-tight">Executive Dashboard</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="pulse-indicator"></span>
+            <span class="text-[10px] uppercase tracking-[0.2em] text-muted fw-bold">Live System Sync</span>
+        </div>
     </div>
 </div>
 
 <div class="row g-4 mb-5">
     <div class="col-md-3">
-        <div class="card p-4 border-0 shadow-sm">
-            <small class="text-muted text-uppercase fw-bold tracking-tighter">Occupancy Rate</small>
-            <h2 class="mt-2 font-serif"><%= stats.occupancyRate %>%</h2>
-            <div class="progress mt-2" style="height: 4px;">
-                <div class="progress-bar bg-primary" style="width: <%= stats.occupancyRate %>%"></div>
+        <div class="card border-0 shadow-sm p-4 h-100 bg-dark text-white">
+            <span class="text-[10px] uppercase tracking-widest opacity-50 mb-1">Total Revenue</span>
+            <h2 class="font-serif text-amber-200 mb-0">$<%= (stats.revenue || 0).toLocaleString() %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Occupancy</span>
+            <h2 class="font-serif text-dark mb-0"><%= stats.occupancyRate %>%</h2>
+            <div class="progress mt-3" style="height: 4px;">
+                <div class="progress-bar bg-dark" style="width: <%= stats.occupancyRate %>%"></div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card p-4 border-0 shadow-sm">
-            <small class="text-muted text-uppercase fw-bold tracking-tighter">Pending Requests</small>
-            <h2 class="mt-2 font-serif text-warning"><%= stats.pendingRequests %></h2>
-            <p class="text-[10px] text-muted mb-0 mt-2">REQUIRES IMMEDIATE REVIEW</p>
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Pending</span>
+            <h2 class="font-serif text-warning mb-0"><%= stats.pendingRequests %></h2>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card p-4 border-0 shadow-sm">
-            <small class="text-muted text-uppercase fw-bold tracking-tighter">Gross Revenue</small>
-            <h2 class="mt-2 font-serif text-success">$<%= stats.revenue.toLocaleString() %></h2>
-            <p class="text-[10px] text-muted mb-0 mt-2">TOTAL APPROVED VALUE</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card p-4 border-0 shadow-sm">
-            <small class="text-muted text-uppercase fw-bold tracking-tighter">Inventory Health</small>
-            <h2 class="mt-2 font-serif"><%= stats.totalRooms - stats.occupiedRooms %> <span class="text-[12px] text-muted">Available</span></h2>
-            <p class="text-[10px] text-muted mb-0 mt-2">OUT OF <%= stats.totalRooms %> ACTIVE ROOMS</p>
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Available Rooms</span>
+            <h2 class="font-serif text-dark mb-0"><%= stats.totalRooms - stats.occupiedRooms %></h2>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-4 mb-5">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-4">
-            <h6 class="font-serif mb-4">Recent Residential Activity</h6>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="text-muted small uppercase">
-                        <tr>
-                            <th>Guest</th>
-                            <th>Status</th>
-                            <th>Amount</th>
-                            <th class="text-end">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% stats.recentBookings.forEach(booking => { %>
-                        <tr>
-                            <td class="fw-bold"><%= booking.guest_name %></td>
-                            <td>
-                                <span class="badge status-badge <%= booking.status === 'approved' ? 'bg-success' : 'bg-warning text-dark' %>">
-                                    <%= booking.status %>
-                                </span>
-                            </td>
-                            <td class="fw-serif">$<%= booking.total_price %></td>
-                            <td class="text-end text-muted small"><%= new Date(booking.created_at).toLocaleDateString() %></td>
-                        </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
+            <h6 class="text-[11px] uppercase tracking-widest fw-bold text-muted mb-4">7-Day Revenue Trend</h6>
+            <div id="revenueTrendChart" style="min-height: 300px;"></div>
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm p-4 bg-dark text-white h-100">
-            <h6 class="font-serif mb-4">Operational Status</h6>
-            <div class="space-y-4">
-                <div class="d-flex justify-content-between border-bottom border-secondary pb-3">
-                    <span class="small text-muted">Front Desk</span>
-                    <span class="text-success small fw-bold">ONLINE</span>
-                </div>
-                <div class="d-flex justify-content-between border-bottom border-secondary pb-3 pt-3">
-                    <span class="small text-muted">Payment Gateway</span>
-                    <span class="text-success small fw-bold">ACTIVE</span>
-                </div>
-                <div class="d-flex justify-content-between border-bottom border-secondary pb-3 pt-3">
-                    <span class="small text-muted">Restaurant API</span>
-                    <span class="text-success small fw-bold">STABLE</span>
-                </div>
-                <div class="mt-5 text-center p-4 bg-secondary/10 rounded">
-                    <p class="small text-muted mb-0 italic">"Luxury is the absence of worry."</p>
-                </div>
-            </div>
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="text-[11px] uppercase tracking-widest fw-bold text-muted mb-4">Status Distribution</h6>
+            <div id="statusDoughnutChart"></div>
         </div>
     </div>
 </div>
 
-<%- include('partials/footer') %>
+<style>
+    .pulse-indicator { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+</style>
+
+<script>
+    (function() {
+        const rawRevenue = <%- stats.revenueTrend || '[]' %>;
+        const rawStatus = <%- stats.statusDist || '[]' %>;
+
+        const revOptions = {
+            series: [{
+                name: 'Revenue',
+                data: rawRevenue.map(d => d.daily_total)
+            }],
+            chart: { type: 'area', height: 300, toolbar: { show: false }, zoom: { enabled: false } },
+            colors: ['#18181b'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2 },
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
+            xaxis: { categories: rawRevenue.map(d => d.day) }
+        };
+        new ApexCharts(document.querySelector("#revenueTrendChart"), revOptions).render();
+
+        const statusOptions = {
+            series: rawStatus.map(d => d.count),
+            labels: rawStatus.map(d => d.status.toUpperCase()),
+            chart: { type: 'donut', height: 300 },
+            colors: ['#18181b', '#f59e0b', '#ef4444', '#10b981'],
+            dataLabels: { enabled: false },
+            plotOptions: { pie: { donut: { size: '75%' } } }
+        };
+        new ApexCharts(document.querySelector("#statusDoughnutChart"), statusOptions).render();
+    })();
+</script>
+
+<%- include('partials/footer'); %>

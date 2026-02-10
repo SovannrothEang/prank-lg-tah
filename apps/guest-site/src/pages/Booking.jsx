@@ -16,14 +16,14 @@ const Booking = () => {
     check_in_date: '',
     check_out_date: '',
     special_requests: '',
-    room_id: roomInfo.roomId || ''
+    room_uuid: roomInfo.roomUuid || ''
   });
 
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createBookingRequest({...formData, total_price: roomInfo.price || 0});
+    await createBookingRequest(formData);
     setSubmitted(true);
   };
 

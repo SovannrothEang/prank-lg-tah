@@ -8,6 +8,9 @@ export const getAvailableRooms = async () => {
 };
 
 export const createBookingRequest = async (bookingData) => {
-    const response = await axios.post(`${API_URL}/bookings`, bookingData);
+    const response = await axios.post(`${API_URL}/bookings`, {
+        ...bookingData,
+        room_uuid: bookingData.roomUuid || bookingData.room_id // Support both for transition
+    });
     return response.data;
 };

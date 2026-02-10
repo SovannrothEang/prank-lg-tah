@@ -22,27 +22,30 @@
         .status-badge { font-size: 0.75rem; text-transform: uppercase; font-weight: bold; padding: 0.25rem 0.5rem; }
     </style>
 </head>
-<body data-user="<%= JSON.stringify(user) %>">
+<body data-session-user='<%- user ? JSON.stringify(user) : "{}" %>'>
     <script>
-        // Sync server-side user session to localStorage for client-side use
-        const userData = document.body.getAttribute('data-user');
-        if (userData) {
-            localStorage.setItem('elysian_session', userData);
-        } else {
-            localStorage.removeItem('elysian_session');
-        }
+        (function() {
+            const userData = document.body.getAttribute('data-session-user');
+            if (userData && userData !== "{}") {
+                localStorage.setItem('elysian_session', userData);
+            } else {
+                localStorage.removeItem('elysian_session');
+            }
+        })();
     </script>
     <div class="sidebar">
         <h4 class="px-4 mb-2">ELYSIAN</h4>
-        <p class="px-4 text-muted small mb-4">User: <%= user.name %> (<%= user.role %>)</p>
-        <a href="/" class="<%= page === 'overview' ? 'active' : '' %>">Overview</a>
-        <a href="/bookings" class="<%= page === 'walk-in' ? 'active' : '' %>">Bookings</a>
-        <a href="/requests" class="<%= page === 'requests' ? 'active' : '' %>">Online Requests</a>
-        <a href="/room-types" class="<%= page === 'room-types' ? 'active' : '' %>">Inventory</a>
-        <a href="/restaurant-admin" class="<%= page === 'restaurant' ? 'active' : '' %>">Restaurant Menu</a>
-        <a href="/reports" class="<%= page === 'reports' ? 'active' : '' %>">Reports & Analytics</a>
-        <% if (user.role === 'admin') { %>
-            <a href="/staff" class="<%= page === 'staff' ? 'active' : '' %>">Staff Management</a>
+        <% if (locals.user) { %>
+            <p class="px-4 text-muted small mb-4">User: <%= user.name %> (<%= user.role %>)</p>
+        <% } %>
+        <a href="/" class="<%= (locals.page === 'overview') ? 'active' : '' %>">Overview</a>
+        <a href="/bookings" class="<%= (locals.page === 'walk-in') ? 'active' : '' %>">Bookings</a>
+        <a href="/requests" class="<%= (locals.page === 'requests') ? 'active' : '' %>">Online Requests</a>
+        <a href="/room-types" class="<%= (locals.page === 'room-types') ? 'active' : '' %>">Inventory</a>
+        <a href="/restaurant-admin" class="<%= (locals.page === 'restaurant') ? 'active' : '' %>">Restaurant Menu</a>
+        <a href="/reports" class="<%= (locals.page === 'reports') ? 'active' : '' %>">Reports & Analytics</a>
+        <% if (locals.user && user.role === 'admin') { %>
+            <a href="/staff" class="<%= (locals.page === 'staff') ? 'active' : '' %>">Staff Management</a>
         <% } %>
         <a href="/reports/excel" class="text-info mt-4">Download Excel</a>
         <a href="/logout" class="text-danger mt-2">Logout</a>

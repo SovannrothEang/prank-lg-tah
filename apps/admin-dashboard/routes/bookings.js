@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
 const { auth } = require('../middleware/auth');
+const AuditService = require('../services/AuditService');
 
 module.exports = (db) => {
     const checkAuth = auth(db);
+    const audit = new AuditService(db);
 
-    // Helper for pricing
     const calculateStayPrice = (checkIn, checkOut, basePrice) => {
         const start = new Date(checkIn);
         const end = new Date(checkOut);
@@ -16,19 +17,40 @@ module.exports = (db) => {
 
     router.get('/bookings', checkAuth, async (req, res) => {
         const bookings = await db.all('SELECT b.*, r.room_number FROM bookings b LEFT JOIN rooms r ON b.room_id = r.id ORDER BY b.created_at DESC');
-        const rooms = await db.all('SELECT * FROM rooms WHERE status = "available" AND is_active = 1');
+        const rooms = await db.all('SELECT * FROM rooms WHERE status = "available" AND is_active = 1 AND deleted_at IS NULL');
         res.render('bookings', { page: 'walk-in', bookings, rooms });
     });
 
+    // POST /bookings (Walk-in)
+    // Enterprise Standard: Transactional + Audited
     router.post('/bookings', checkAuth, async (req, res) => {
         const { guest_name, phone_number, telegram, room_id, check_in_date, check_out_date } = req.body;
-        const room = await db.get('SELECT rt.base_price FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.id = ?', [room_id]);
-        const totalPrice = calculateStayPrice(check_in_date, check_out_date, room.base_price);
+        
+        try {
+            await db.run('BEGIN TRANSACTION');
 
-        await db.run('INSERT INTO bookings (guest_name, phone_number, telegram, room_id, check_in_date, check_out_date, status, source, total_price) VALUES (?, ?, ?, ?, ?, ?, "approved", "walk-in", ?)', 
-            [guest_name, phone_number, telegram, room_id, check_in_date, check_out_date, totalPrice]);
-        await db.run('UPDATE rooms SET status = "occupied" WHERE id = ?', [room_id]);
-        res.redirect('/bookings');
+            const room = await db.get('SELECT rt.base_price, r.uuid FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE r.id = ?', [room_id]);
+            const totalPrice = calculateStayPrice(check_in_date, check_out_date, room.base_price);
+
+            const { v4: uuidv4 } = require('uuid');
+            const bookingUuid = uuidv4();
+
+            await db.run(`
+                INSERT INTO bookings (uuid, guest_name, phone_number, telegram, room_id, check_in_date, check_out_date, status, source, total_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', 'walk-in', ?)
+            `, [bookingUuid, guest_name, phone_number, telegram, room_id, check_in_date, check_out_date, totalPrice]);
+
+            await db.run('UPDATE rooms SET status = "occupied" WHERE id = ?', [room_id]);
+
+            await audit.log(req.session.user.id, 'CREATE', 'bookings', null, null, { guest_name, room_id, totalPrice });
+            
+            await db.run('COMMIT');
+            res.redirect('/bookings');
+        } catch (error) {
+            await db.run('ROLLBACK');
+            console.error('[WALK_IN_ERROR]:', error);
+            res.redirect('/bookings?error=transaction_failed');
+        }
     });
 
     router.get('/requests', checkAuth, async (req, res) => {
@@ -43,21 +65,37 @@ module.exports = (db) => {
         res.render('requests', { page: 'requests', requests });
     });
 
+    // POST /requests/:id/approve
+    // Enterprise Standard: Transactional verification
     router.post('/requests/:id/approve', checkAuth, async (req, res) => {
-        const booking = await db.get('SELECT * FROM bookings WHERE id = ?', [req.params.id]);
-        if (booking) {
+        try {
+            await db.run('BEGIN TRANSACTION');
+
+            const booking = await db.get('SELECT * FROM bookings WHERE id = ?', [req.params.id]);
+            if (!booking) throw new Error('Booking not found');
+
             const room = await db.get('SELECT status FROM rooms WHERE id = ?', [booking.room_id]);
-            if (room.status === 'available') {
-                await db.run('UPDATE bookings SET status = "approved" WHERE id = ?', [req.params.id]);
-                await db.run('UPDATE rooms SET status = "occupied" WHERE id = ?', [booking.room_id]);
-                return res.redirect('/requests');
+            if (room.status !== 'available') {
+                throw new Error('Room conflict detected during sync');
             }
+
+            await db.run('UPDATE bookings SET status = "approved" WHERE id = ?', [req.params.id]);
+            await db.run('UPDATE rooms SET status = "occupied" WHERE id = ?', [booking.room_id]);
+
+            await audit.log(req.session.user.id, 'UPDATE', 'bookings', booking.id, { status: 'pending' }, { status: 'approved' });
+
+            await db.run('COMMIT');
+            res.redirect('/requests');
+        } catch (error) {
+            await db.run('ROLLBACK');
+            console.error('[APPROVAL_ERROR]:', error);
+            res.redirect(`/requests?error=${encodeURIComponent(error.message)}`);
         }
-        res.redirect('/requests?error=conflict');
     });
 
     router.post('/requests/:id/reject', checkAuth, async (req, res) => {
         await db.run('UPDATE bookings SET status = "rejected" WHERE id = ?', [req.params.id]);
+        await audit.log(req.session.user.id, 'UPDATE', 'bookings', req.params.id, { status: 'pending' }, { status: 'rejected' });
         res.redirect('/requests');
     });
 
@@ -70,7 +108,7 @@ module.exports = (db) => {
         res.setHeader('Content-Disposition', `attachment; filename=invoice_${b.id}.pdf`);
         doc.pipe(res);
         doc.fontSize(25).text('ELYSIAN HOTEL INVOICE', { align: 'center' });
-        doc.moveDown().fontSize(12).text(`ID: ${b.id}`).text(`Guest: ${b.guest_name}`).text(`Phone: ${b.phone_number}`).text(`Telegram: ${b.telegram}`).text(`Room: ${b.room_number}`).text(`Dates: ${b.check_in_date} to ${b.check_out_date}`).moveDown().fontSize(18).text(`TOTAL: $${b.total_price.toFixed(2)}`, { align: 'right' });
+        doc.moveDown().fontSize(12).text(`REF: ${b.uuid}`).text(`Guest: ${b.guest_name}`).text(`Phone: ${b.phone_number}`).text(`Room: ${b.room_number}`).text(`Dates: ${b.check_in_date} to ${b.check_out_date}`).moveDown().fontSize(18).text(`TOTAL: $${b.total_price.toFixed(2)}`, { align: 'right' });
         doc.end();
     });
 

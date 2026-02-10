@@ -1,4 +1,4 @@
-<%- include('partials/header') %>
+<%- include('partials/header'); %>
 
 <div class="mb-5">
     <h2 class="font-serif">Online Guest Requests</h2>
@@ -20,18 +20,21 @@
             <tr>
                 <td class="ps-4">
                     <div class="fw-bold"><%= request.guest_name %></div>
-                    <div class="text-[10px] text-primary">TELEGRAM: <%= request.telegram %></div>
+                    <div class="text-[10px] text-primary">TELEGRAM: <%= request.telegram || 'N/A' %></div>
+                    <% if (request.phone_number) { %>
+                        <div class="text-[10px] text-muted">TEL: <%= request.phone_number %></div>
+                    <% } %>
                 </td>
                 <td>
-                    <div class="small fw-bold"><%= request.type_name %></div>
-                    <div class="text-[10px] text-muted">BASE: $<%= request.base_price %>/NIGHT</div>
+                    <div class="small fw-bold"><%= request.type_name || 'Standard' %></div>
+                    <div class="text-[10px] text-muted">BASE: $<%= (request.base_price || 0).toFixed(2) %>/NIGHT</div>
                 </td>
                 <td>
                     <div class="small"><%= request.check_in_date %> <span class="text-muted">→</span> <%= request.check_out_date %></div>
                 </td>
                 <td class="text-end pe-4">
                     <% if (request.status === 'pending') { %>
-                        <button class="btn btn-sm btn-dark px-4" onclick="previewRequest('<%= JSON.stringify(request) %>')">Review & Sync</button>
+                        <button class="btn btn-sm btn-dark px-4" onclick="previewRequest('<%= JSON.stringify(request).replace(/'/g, "\\'") %>')">Review & Sync</button>
                     <% } else { %>
                         <span class="badge status-badge <%= request.status === 'approved' ? 'bg-success' : 'bg-danger' %>"><%= request.status %></span>
                     <% } %>
@@ -44,52 +47,51 @@
 
 <!-- Review Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-serif">Invoice Verification</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-0">
+            <div class="modal-header bg-dark text-white border-0 py-4">
+                <div class="text-center w-100">
+                    <h5 class="modal-title font-serif tracking-widest uppercase">Invoice Verification</h5>
+                </div>
             </div>
-            <div class="modal-body p-4">
-                <div class="bg-light p-4 rounded mb-4">
+            <div class="modal-body p-5">
+                <div id="modal-content-area">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="small text-muted">Stay Duration</span>
-                        <span id="p_nights" class="fw-bold">--</span>
+                        <span class="small text-dark fw-medium">Residence Duration</span>
+                        <span id="p_nights" class="small fw-bold">--</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="small text-muted">Rate</span>
-                        <span id="p_rate" class="fw-bold">--</span>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="small text-dark fw-medium">Base Nightly Rate</span>
+                        <span id="p_rate" class="small fw-bold">--</span>
                     </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mt-3">
-                        <h6 class="font-serif">Total Due</h6>
-                        <h4 class="font-serif text-success" id="p_total">--</h4>
+                    <div class="bg-light p-4 rounded-0 mb-0 border-start border-4 border-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-[10px] uppercase tracking-widest fw-bold">Total Stay Value</span>
+                            <h3 class="font-serif mb-0 text-success" id="p_total">--</h3>
+                        </div>
                     </div>
                 </div>
-                <p class="text-[10px] text-muted text-center uppercase tracking-widest mb-0">
-                    Synchronizing with room inventory status...
-                </p>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <form id="approveForm" method="POST" class="w-100 d-flex gap-2">
-                    <button type="submit" class="btn btn-success flex-grow-1 py-2">Approve & Book</button>
-                    <button type="button" id="rejectBtn" class="btn btn-outline-danger flex-grow-1 py-2">Reject Request</button>
+            <div class="modal-footer border-0 p-0 flex-column">
+                <form id="approveForm" method="POST" class="w-100">
+                    <button type="submit" class="btn btn-dark w-100 rounded-0 py-3 uppercase tracking-[0.2em] text-[11px] fw-bold">Execute Approval</button>
                 </form>
+                <button type="button" id="rejectBtn" class="btn btn-link w-100 text-danger text-decoration-none py-3 text-[11px] uppercase tracking-widest fw-bold">Decline Request</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function previewRequest(data) {
-    const r = JSON.parse(data);
+function previewRequest(dataStr) {
+    const r = JSON.parse(dataStr);
     const start = new Date(r.check_in_date);
     const end = new Date(r.check_out_date);
     const nights = Math.max(Math.ceil((end - start) / (1000 * 60 * 60 * 24)), 1);
     
     document.getElementById('p_nights').innerText = nights + ' Night(s)';
-    document.getElementById('p_rate').innerText = '$' + r.base_price + '/night';
-    document.getElementById('p_total').innerText = '$' + r.total_price.toFixed(2);
+    document.getElementById('p_rate').innerText = '$' + (r.base_price || 0).toFixed(2);
+    document.getElementById('p_total').innerText = '$' + (nights * (r.base_price || 0)).toLocaleString(undefined, {minimumFractionDigits: 2});
     
     document.getElementById('approveForm').action = '/requests/' + r.id + '/approve';
     
@@ -105,4 +107,4 @@ function previewRequest(data) {
 }
 </script>
 
-<%- include('partials/footer') %>
+<%- include('partials/footer'); %>

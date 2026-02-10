@@ -55,7 +55,7 @@ const Rooms = () => {
               <div className="absolute inset-0 p-10 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-700">
                 <Link 
                   to="/booking" 
-                  state={{ roomId: room.id, roomType: room.type_name, price: room.base_price }}
+                  state={{ roomUuid: room.uuid, roomType: room.type_name, price: room.base_price }}
                   className="luxury-button border-white/40 text-white hover:border-white text-center"
                 >
                   Reserve Now

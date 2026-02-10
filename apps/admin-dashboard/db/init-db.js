@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 async function initDb() {
     const db = await open({
@@ -9,95 +10,108 @@ async function initDb() {
         driver: sqlite3.Database
     });
 
+    // Enable Foreign Keys
+    await db.get('PRAGMA foreign_keys = ON');
+
     await db.exec(`
+        -- USERS & AUTH
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE NOT NULL,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             full_name TEXT,
-            role TEXT DEFAULT 'staff',
+            role TEXT CHECK(role IN ('admin', 'manager', 'staff')) DEFAULT 'staff',
             session_id TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- INVENTORY CATEGORIES
         CREATE TABLE IF NOT EXISTS room_types (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
             base_price REAL NOT NULL,
-            is_active BOOLEAN DEFAULT 1
+            is_active BOOLEAN DEFAULT 1,
+            deleted_at DATETIME,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- PHYSICAL ASSETS
         CREATE TABLE IF NOT EXISTS rooms (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE NOT NULL,
             room_number TEXT UNIQUE NOT NULL,
-            room_type_id INTEGER,
-            status TEXT DEFAULT 'available',
+            room_type_id INTEGER NOT NULL,
+            status TEXT CHECK(status IN ('available', 'occupied', 'maintenance', 'dirty')) DEFAULT 'available',
             is_active BOOLEAN DEFAULT 1,
+            deleted_at DATETIME,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(room_type_id) REFERENCES room_types(id)
         );
 
-        CREATE TABLE IF NOT EXISTS menu_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT,
-            price REAL NOT NULL,
-            is_available BOOLEAN DEFAULT 1
-        );
-
+        -- BOOKINGS (THE CORE ENGINE)
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE NOT NULL,
             guest_name TEXT NOT NULL,
-            guest_email TEXT,
-            phone_number TEXT,
+            phone_number TEXT NOT NULL,
             telegram TEXT,
-            room_id INTEGER,
-            check_in_date TEXT NOT NULL,
-            check_out_date TEXT NOT NULL,
-            status TEXT DEFAULT 'pending',
-            source TEXT DEFAULT 'online',
-            total_price REAL,
+            guest_email TEXT,
+            room_id INTEGER NOT NULL,
+            check_in_date DATE NOT NULL,
+            check_out_date DATE NOT NULL,
+            status TEXT CHECK(status IN ('pending', 'approved', 'rejected', 'checked_in', 'checked_out', 'cancelled')) DEFAULT 'pending',
+            source TEXT CHECK(source IN ('online', 'walk-in')) DEFAULT 'online',
+            total_price REAL NOT NULL,
             special_requests TEXT,
+            internal_notes TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(room_id) REFERENCES rooms(id)
         );
 
-        CREATE TABLE IF NOT EXISTS payments (
+        -- AUDIT SYSTEM (NON-NEGOTIABLE FOR ENTERPRISE)
+        CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            booking_id INTEGER,
-            amount REAL NOT NULL,
-            payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            payment_method TEXT,
-            FOREIGN KEY(booking_id) REFERENCES bookings(id)
+            user_id INTEGER,
+            action TEXT NOT NULL, -- CREATE, UPDATE, DELETE, LOGIN
+            table_name TEXT,
+            record_id INTEGER,
+            old_value TEXT, -- JSON string
+            new_value TEXT, -- JSON string
+            ip_address TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+
+        -- GASTRONOMY
+        CREATE TABLE IF NOT EXISTS menu_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE NOT NULL,
+            category TEXT CHECK(category IN ('food', 'deserts', 'wine')) NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            price REAL NOT NULL,
+            is_available BOOLEAN DEFAULT 1,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     `);
 
-    // --- MIGRATIONS ---
-    try { await db.exec(`ALTER TABLE room_types ADD COLUMN is_active BOOLEAN DEFAULT 1`); } catch(e) {}
-    try { await db.exec(`ALTER TABLE rooms ADD COLUMN is_active BOOLEAN DEFAULT 1`); } catch(e) {}
-    try { await db.exec(`ALTER TABLE users ADD COLUMN session_id TEXT`); } catch(e) {}
-    try { await db.exec(`ALTER TABLE bookings ADD COLUMN phone_number TEXT`); } catch(e) {}
-    try { await db.exec(`ALTER TABLE bookings ADD COLUMN telegram TEXT`); } catch(e) {}
-    try { await db.exec(`ALTER TABLE bookings ADD COLUMN special_requests TEXT`); } catch(e) {}
-
-    // Seed Admin
+    // Enterprise Seed: Admin User
     const admin = await db.get('SELECT * FROM users WHERE username = ?', ['admin']);
     if (!admin) {
         const hashedPassword = await bcrypt.hash('admin123', 10);
-        await db.run('INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)', 
-            ['admin', hashedPassword, 'System Administrator', 'admin']);
+        await db.run('INSERT INTO users (uuid, username, password, full_name, role) VALUES (?, ?, ?, ?, ?)', 
+            [uuidv4(), 'admin', hashedPassword, 'System Administrator', 'admin']);
+        console.log('[SEED] Default Enterprise Admin created.');
     }
 
-    console.log('Enterprise Database Synchronized & Migrated.');
+    console.log('✅ Enterprise Schema Synchronized.');
     return db;
 }
 
 module.exports = { initDb };
-
-if (require.main === module) {
-    initDb().catch(err => {
-        console.error(err);
-        process.exit(1);
-    });
-}
