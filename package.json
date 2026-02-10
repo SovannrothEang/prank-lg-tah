@@ -1,0 +1,16 @@
+{
+  "name": "hotel-management-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "admin:dev": "npm run dev -w admin-dashboard",
+    "guest:dev": "npm run dev -w guest-site",
+    "dev": "concurrently \"npm run admin:dev\" \"npm run guest:dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

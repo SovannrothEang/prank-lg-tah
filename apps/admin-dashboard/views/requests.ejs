@@ -1,0 +1,37 @@
+<%- include('partials/header') %>
+
+<div class="mb-4">
+    <h2>Online Book Requests</h2>
+    <p class="text-muted">Manage guest requests submitted via the website.</p>
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Guest</th>
+            <th>Room Preference</th>
+            <th>Dates</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% if (requests.length === 0) { %>
+            <tr><td colspan="5" class="text-center py-4">No pending requests</td></tr>
+        <% } %>
+        <% requests.forEach(request => { %>
+        <tr>
+            <td><%= request.guest_name %><br><small><%= request.guest_email %></small></td>
+            <td>Room ID: <%= request.room_id %></td>
+            <td><%= request.check_in_date %> to <%= request.check_out_date %></td>
+            <td><span class="badge bg-warning text-dark status-badge"><%= request.status %></span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-success">Approve</button>
+                <button class="btn btn-sm btn-outline-danger">Reject</button>
+            </td>
+        </tr>
+        <% }) %>
+    </tbody>
+</table>
+
+<%- include('partials/footer') %>

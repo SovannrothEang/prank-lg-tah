@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Rooms Inventory</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRoomModal">+ Add Room</button>
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% rooms.forEach(room => { %>
+        <tr>
+            <td class="fw-bold"><%= room.room_number %></td>
+            <td><%= room.type_name %></td>
+            <td>
+                <span class="badge <%= room.status === 'available' ? 'bg-success' : 'bg-secondary' %> status-badge">
+                    <%= room.status %>
+                </span>
+            </td>
+            <td><button class="btn btn-sm btn-outline-dark">Manage</button></td>
+        </tr>
+        <% }) %>
+    </tbody>
+</table>
+
+<div class="modal fade" id="newRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/rooms" method="POST" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Physical Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Room Number</label>
+                    <input type="text" name="room_number" class="form-control" placeholder="e.g. 402" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Room Type</label>
+                    <select name="room_type_id" class="form-select" required>
+                        <% types.forEach(type => { %>
+                            <option value="<%= type.id %>"><%= type.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary w-100">Add Room</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
