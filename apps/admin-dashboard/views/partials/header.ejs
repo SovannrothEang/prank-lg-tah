@@ -22,7 +22,16 @@
         .status-badge { font-size: 0.75rem; text-transform: uppercase; font-weight: bold; padding: 0.25rem 0.5rem; }
     </style>
 </head>
-<body>
+<body data-user="<%= JSON.stringify(user) %>">
+    <script>
+        // Sync server-side user session to localStorage for client-side use
+        const userData = document.body.getAttribute('data-user');
+        if (userData) {
+            localStorage.setItem('elysian_session', userData);
+        } else {
+            localStorage.removeItem('elysian_session');
+        }
+    </script>
     <div class="sidebar">
         <h4 class="px-4 mb-2">ELYSIAN</h4>
         <p class="px-4 text-muted small mb-4">User: <%= user.name %> (<%= user.role %>)</p>

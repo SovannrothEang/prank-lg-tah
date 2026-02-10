@@ -16,6 +16,7 @@ async function initDb() {
             password TEXT NOT NULL,
             full_name TEXT,
             role TEXT DEFAULT 'staff',
+            session_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -31,7 +32,7 @@ async function initDb() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             room_number TEXT UNIQUE NOT NULL,
             room_type_id INTEGER,
-            status TEXT DEFAULT 'available', -- available, occupied, maintenance
+            status TEXT DEFAULT 'available',
             is_active BOOLEAN DEFAULT 1,
             FOREIGN KEY(room_type_id) REFERENCES room_types(id)
         );
@@ -54,7 +55,7 @@ async function initDb() {
             room_id INTEGER,
             check_in_date TEXT NOT NULL,
             check_out_date TEXT NOT NULL,
-            status TEXT DEFAULT 'pending', -- pending, approved, rejected, checked_in, checked_out
+            status TEXT DEFAULT 'pending',
             source TEXT DEFAULT 'online',
             total_price REAL,
             special_requests TEXT,
@@ -72,9 +73,13 @@ async function initDb() {
         );
     `);
 
-    // Migration: Add is_active if they don't exist
+    // --- MIGRATIONS ---
     try { await db.exec(`ALTER TABLE room_types ADD COLUMN is_active BOOLEAN DEFAULT 1`); } catch(e) {}
     try { await db.exec(`ALTER TABLE rooms ADD COLUMN is_active BOOLEAN DEFAULT 1`); } catch(e) {}
+    try { await db.exec(`ALTER TABLE users ADD COLUMN session_id TEXT`); } catch(e) {}
+    try { await db.exec(`ALTER TABLE bookings ADD COLUMN phone_number TEXT`); } catch(e) {}
+    try { await db.exec(`ALTER TABLE bookings ADD COLUMN telegram TEXT`); } catch(e) {}
+    try { await db.exec(`ALTER TABLE bookings ADD COLUMN special_requests TEXT`); } catch(e) {}
 
     // Seed Admin
     const admin = await db.get('SELECT * FROM users WHERE username = ?', ['admin']);
@@ -84,8 +89,15 @@ async function initDb() {
             ['admin', hashedPassword, 'System Administrator', 'admin']);
     }
 
-    console.log('Enterprise Database Synchronized.');
+    console.log('Enterprise Database Synchronized & Migrated.');
     return db;
 }
 
 module.exports = { initDb };
+
+if (require.main === module) {
+    initDb().catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
+}
