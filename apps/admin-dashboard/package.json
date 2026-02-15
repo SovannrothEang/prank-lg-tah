@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
+    "seed": "node -e \"const { initDb } = require('./db/init-db'); const SeedingService = require('./services/SeedingService'); (async () => { const db = await initDb(); const s = new SeedingService(db); await s.seedAll(); process.exit(0); })()\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@faker-js/faker": "^10.3.0",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",

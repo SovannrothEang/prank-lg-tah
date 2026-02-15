@@ -20,8 +20,9 @@ Execute these from the project root:
 ### Workspace Specific Commands
 - **Install Dependencies**: `npm install` (from root to install all workspace deps)
 - **Run Tests**: `npm test -w <app-name>` (e.g., `npm test -w admin-dashboard`)
-- **Run Single Test**: `npm test -w <app-name> -- <path/to/test>` (Note: Configure test runner in package.json if adding new tests)
+- **Run Single Test**: `npm test -w <app-name> -- <path/to/test>`
 - **Linting**: `npm run lint -w guest-site`
+- **Database Seeding**: `npm run seed -w admin-dashboard` (Injects luxury mock data)
 
 ## Code Style Guidelines
 
@@ -48,69 +49,66 @@ Execute these from the project root:
   - Use UPPERCASE for SQL keywords.
   - Use `db` instance passed through routes.
   - Always use `async/await` for DB operations.
+- **Real-time**: Socket.io integrated in `index.js`. Use `io.emit()` for dashboard notifications.
 - **Responses**: Use helpers from `middleware/response.js`:
   - `successResponse(res, data, message, statusCode)`
   - `errorResponse(res, message, errorCode, statusCode)`
-- **Validation**: Every POST/PUT route must use Zod schemas in `middleware/validate.js` via the `validate(schema)` middleware.
-- **Authentication**: Access/Refresh JWT tokens stored in HttpOnly cookies. Use `auth` middleware from `middleware/auth.js`.
+- **Validation**: Every POST/PUT route must use Zod schemas in `middleware/validate.js`.
+- **Authentication**: JWT-based. Access (1h) and Refresh (7d) tokens in HttpOnly cookies.
+  - Refresh tokens are stored in the `refresh_tokens` table for revocation.
 
 ### Frontend Architecture (`apps/guest-site`)
 - **Framework**: React 19 (Functional Components + Hooks).
-- **Styling**: Tailwind CSS 4.0. Prioritize utility classes over custom CSS.
+- **Styling**: Tailwind CSS 4.0. Prioritize utility classes.
 - **Icons**: Use `lucide-react`.
-- **Animations**: Use `framer-motion` for transitions.
-- **Routing**: `react-router-dom` v7. Use Data APIs (loaders/actions) where appropriate.
-- **Services**: All API calls must go through `src/services/api.js`. Do not use `fetch`/`axios` directly in components.
+- **Animations**: `framer-motion` for transitions and cinematic entry effects.
+- **Routing**: `react-router-dom` v7. Use `AnimatePresence` for page transitions.
+- **Services**: All API calls must go through `src/services/api.js`.
 
 ## Error Handling Mandates
 
 ### Backend
 - Wrap all async controller logic in `try/catch`.
 - Log errors with context: `console.error('[CONTEXT_ERROR]:', error)`.
-- Use the global `errorHandler` middleware in `index.js` for final catching.
-- Never leak stack traces to the client in production.
+- Use the global `errorHandler` middleware in `index.js`.
 
 ### Frontend
 - Use optional chaining (`?.`) defensively.
-- Implement `try/catch` in service calls.
-- Use `ErrorBoundary` components for critical UI sections (Home, Booking).
+- Use `ErrorBoundary` for critical UI sections (Home, Booking).
 
 ## Database & Schema
 - **Init**: Schema is defined in `db/init-db.js`.
-- **Migrations**: Use the `addColumn` helper in `init-db.js` to add columns to existing tables.
-- **UUIDs**: Use `uuid/v4` for public identifiers. Internal joins should use integer `id`.
-- **Soft Deletes**: Use `deleted_at` (DATETIME) for non-permanent removals.
+- **Migrations**: Use the `addColumn` helper in `init-db.js` for non-destructive updates.
+- **CRM**: Centralized `guests` table identifies guests by unique `phone_number`.
+- **Invoicing**: Integrated `room_charges` for POS/Restaurant billing.
 - **Integrity**: `PRAGMA foreign_keys = ON` is required.
 
 ## Agent Workflow Patterns
 
 ### Adding a New Admin Feature
-1.  **Schema**: Update `db/init-db.js` if new tables/columns are needed.
-2.  **Route**: Create a new file in `routes/` (e.g., `routes/housekeeping.js`).
-3.  **Register**: Import and `app.use` the new route in `index.js`, passing the `db` instance.
-4.  **View**: Create a new EJS file in `views/`.
-5.  **Nav**: Add the link to `views/partials/header.ejs`.
-6.  **Audit**: Log the action using `audit.log()` within the route.
+1.  **Schema**: Update `db/init-db.js` (add tables/columns).
+2.  **Route**: Create file in `routes/` (receive `db` or `db, io`).
+3.  **Register**: Import and `app.use` in `index.js`.
+4.  **View**: Create EJS file in `views/` using `partials/header` and `footer`.
+5.  **Audit**: Log actions using `audit.log()`.
 
 ### Adding a New Guest Page
-1.  **Component**: Create the page in `src/pages/`.
-2.  **Service**: Add any needed API methods to `src/services/api.js`.
-3.  **Route**: Register the page in `src/App.jsx`.
-4.  **Style**: Use Tailwind and Framer Motion for a "Cinematic" feel.
+1.  **Component**: Create page in `src/pages/`.
+2.  **Route**: Register in `src/App.jsx` inside `AnimatedRoutes`.
+3.  **Style**: Use "Elysian" standards (Zinc/Stone colors, Serif headers).
 
 ## Security Mandates
-- **Tokens**: Never log JWT secrets or raw tokens.
-- **Sanitization**: EJS handles basic escaping, but be careful with `<%-` (unescaped output).
-- **Auth**: Always verify `res.locals.user` exists in protected routes.
-- **PII**: Handle guest emails and phone numbers with care (no logging).
+- **Tokens**: Never log JWT secrets. Use `SESSION_SECRET` from `.env`.
+- **Sanitization**: Be extremely careful with `<%-` in EJS (unescaped output).
+- **Auth**: Verify `res.locals.user` exists in protected routes.
+- **PII**: Protect guest emails and phone numbers.
 
 ## Visual Standards (The "Elysian" Aesthetic)
-- **Colors**: Use Stone, Zinc, and Slate palettes.
-- **Typography**: Serif for headings (`font-serif`), Sans-serif for body (`Inter`).
-- **White Space**: High margin/padding for a premium feel.
-- **Transitions**: Subtle opacity fades and Y-axis slides on page entry.
+- **Colors**: Zinc (`#09090b`), Stone, and subtle Gold/Amber accents.
+- **Typography**: `Playfair Display` (Serif) for headings, `Inter` (Sans) for body.
+- **UX**: Subtle "Noise" grain overlay and 0.6s opacity/Y-axis page transitions.
+- **Borders**: 1px Zinc-200 for cards instead of heavy shadows.
 
 ## Deployment & Environments
-- **Environment**: Check `isProduction` for cookie security (`secure: true`).
-- **Secrets**: Use `.env` variables for `SESSION_SECRET` and `JWT_SECRET`.
-- **Containers**: Refer to the root `Dockerfile` for build steps.
+- **Secrets**: Use `.env` variables for `SESSION_SECRET` and `TELEGRAM_BOT_TOKEN`.
+- **Production**: `NODE_ENV=production` enforces `secure: true` on cookies.

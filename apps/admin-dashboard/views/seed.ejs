@@ -1,0 +1,71 @@
+<%- include('partials/header') %>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="font-serif text-dark tracking-tight mb-1">System Administration</h2>
+        <p class="text-muted small mb-0">Database management and mock data generation</p>
+    </div>
+</div>
+
+<% if (locals.success) { %>
+    <div class="alert alert-success border-0 rounded-0 mb-4 shadow-sm">
+        <%= success %>
+    </div>
+<% } %>
+
+<div class="row g-4">
+    <!-- Current Statistics -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4">
+            <h6 class="small fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.1em;">Current Stats</h6>
+            <div class="d-flex flex-column gap-3">
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="small">Total Guests</span>
+                    <span class="fw-bold"><%= counts.guests %></span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="small">Bookings</span>
+                    <span class="fw-bold"><%= counts.bookings %></span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="small">Rooms</span>
+                    <span class="fw-bold"><%= counts.rooms %></span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small">Menu Items</span>
+                    <span class="fw-bold"><%= counts.menu %></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-dark text-white border-0">
+                <h6 class="mb-0 small fw-bold text-uppercase" style="letter-spacing: 0.1em;">Seeding & Maintenance</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-5">
+                    <h5>Generate Mock Data</h5>
+                    <p class="text-muted small mb-4">Populate the system with 15 guests, 20 bookings, and luxury menu items using Faker. Existing room types will be preserved.</p>
+                    <form action="/system/seed/run" method="POST">
+                        <button type="submit" class="btn btn-dark px-4">RUN CONTROLLED SEEDER</button>
+                    </form>
+                </div>
+
+                <hr class="my-5 opacity-10">
+
+                <div class="bg-light p-4 border-start border-danger border-4">
+                    <h5 class="text-danger">Danger Zone</h5>
+                    <p class="text-muted small mb-4">This will permanently delete all Bookings, Payments, Guests, and Charges. This action cannot be undone.</p>
+                    <form action="/system/seed/wipe" method="POST" onsubmit="return confirm('CRITICAL: Are you absolutely sure? This will wipe all guest and booking history.')">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">WIPE ALL OPERATIONAL DATA</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

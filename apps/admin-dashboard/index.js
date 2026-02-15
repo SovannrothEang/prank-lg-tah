@@ -90,6 +90,15 @@ app.set('views', path.join(__dirname, 'views'));
     const AuditService = require('./services/AuditService');
     const audit = new AuditService(db);
 
+    // Auto-seed if empty (Controlled)
+    const SeedingService = require('./services/SeedingService');
+    const seeder = new SeedingService(db);
+    const guestCount = await db.get('SELECT COUNT(*) as count FROM guests');
+    if (guestCount.count === 0) {
+        console.log('[SYSTEM] Empty database detected. Auto-seeding initial luxury data...');
+        await seeder.seedAll();
+    }
+
     // Socket.io connection handling
     io.on('connection', (socket) => {
         console.log('[SOCKET] Admin connected:', socket.id);
@@ -185,11 +194,12 @@ app.set('views', path.join(__dirname, 'views'));
     app.use('/', require('./routes/reports')(db));
     app.use('/', require('./routes/staff')(db));
     app.use('/', require('./routes/housekeeping')(db));
-        app.use('/', require('./routes/audit')(db));
+    app.use('/', require('./routes/audit')(db));
     app.use('/', require('./routes/guests')(db));
     app.use('/', require('./routes/pos')(db));
-    app.use('/', require('./routes/api')(db, io));
- // Passing IO to API routes
+    app.use('/', require('./routes/system')(db));
+    app.use('/', require('./routes/api')(db, io)); // Passing IO to API routes
+
 
     // Global Error Handler
     app.use(errorHandler);

@@ -202,6 +202,8 @@ async function initDb() {
     await addColumn('menu_items', 'uuid', 'TEXT');
 
     // Payments
+    await addColumn('payments', 'uuid', 'TEXT');
+    await addColumn('payments', 'recorded_by', 'INTEGER');
     await addColumn('payments', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
 
     // Backfill missing UUIDs across all tables
