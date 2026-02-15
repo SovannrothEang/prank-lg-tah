@@ -65,7 +65,7 @@
                 <% if (user.role === 'admin' || user.role === 'manager') { %>
                     <td class="text-end pe-4">
                         <div class="d-flex gap-1 justify-content-end">
-                            <button class="btn btn-sm btn-outline-dark" onclick="editRoom('<%- JSON.stringify(room).replace(/'/g, "\\'") %>')">Edit</button>
+                            <button class="btn btn-sm btn-outline-dark" data-room="<%- encodeURIComponent(JSON.stringify(room)) %>" onclick="editRoom(this)">Edit</button>
                             <% if (room.status !== 'occupied') { %>
                                 <form action="/rooms/<%= room.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete room <%= room.room_number %>?')">
                                     <button class="btn btn-sm btn-outline-danger">Delete</button>
@@ -153,8 +153,8 @@
 </div>
 
 <script>
-function editRoom(data) {
-    const room = JSON.parse(data);
+function editRoom(button) {
+    const room = JSON.parse(decodeURIComponent(button.dataset.room));
     document.getElementById('room_id').value = room.id;
     document.getElementById('room_num').value = room.room_number;
     document.getElementById('room_type').value = room.room_type_id;

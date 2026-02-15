@@ -96,12 +96,12 @@
                     <div class="d-flex gap-1 justify-content-end flex-wrap">
                         <% if (booking.status === 'approved') { %>
                             <form action="/bookings/<%= booking.id %>/check-in" method="POST" class="d-inline">
-                                <button class="btn btn-sm btn-success">Check In</button>
+                                <button class="btn btn-sm btn-success booking-action-btn">Check In</button>
                             </form>
                         <% } %>
                         <% if (booking.status === 'checked_in') { %>
                             <form action="/bookings/<%= booking.id %>/check-out" method="POST" class="d-inline">
-                                <button class="btn btn-sm btn-info">Check Out</button>
+                                <button class="btn btn-sm btn-info booking-action-btn">Check Out</button>
                             </form>
                         <% } %>
                         <% if (['pending', 'approved', 'checked_in'].includes(booking.status)) { %>

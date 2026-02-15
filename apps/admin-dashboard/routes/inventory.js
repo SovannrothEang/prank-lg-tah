@@ -216,7 +216,12 @@ module.exports = (db) => {
             );
             if (activeBookings.count > 0) throw new Error(`Cannot delete: ${activeBookings.count} active booking(s) on this room`);
 
-            await db.run('UPDATE rooms SET deleted_at = CURRENT_TIMESTAMP, is_active = 0 WHERE id = ?', [req.params.id]);
+            await db.run('UPDATE rooms SET deleted_at = CURRENT_TIMESTAMP, is_active = 0, image_path = NULL WHERE id = ?', [req.params.id]);
+            if (room.image_path) {
+                const roomImageName = path.basename(room.image_path);
+                const roomImagePath = path.join(roomsDir, roomImageName);
+                if (fs.existsSync(roomImagePath)) fs.unlinkSync(roomImagePath);
+            }
             await audit.log(res.locals.user.id, 'DELETE', 'rooms', req.params.id, { room_number: room.room_number }, null);
             res.redirect('/rooms');
         } catch (error) {

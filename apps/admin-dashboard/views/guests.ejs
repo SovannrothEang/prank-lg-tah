@@ -50,12 +50,12 @@
                 </td>
                 <td class="text-end pe-4">
                     <div class="d-flex gap-1 justify-content-end">
-                        <a href="/guests/<%= guest.id %>" class="btn btn-sm btn-outline-dark">History</a>
                         <form action="/guests/<%= guest.id %>/vip" method="POST">
                             <button class="btn btn-sm <%= guest.is_vip ? 'btn-warning' : 'btn-outline-warning text-dark' %>">
                                 <%= guest.is_vip ? 'Remove VIP' : 'Set VIP' %>
                             </button>
                         </form>
+                        <a href="/guests/<%= guest.id %>" class="btn btn-sm btn-outline-dark">History</a>
                     </div>
                 </td>
             </tr>

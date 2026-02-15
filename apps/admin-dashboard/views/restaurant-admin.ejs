@@ -42,7 +42,7 @@
                         <% if (user.role === 'admin' || user.role === 'manager') { %>
                             <td class="text-end pe-4">
                                 <div class="d-flex gap-1 justify-content-end">
-                                    <button class="btn btn-sm btn-outline-dark" onclick="editItem('<%- JSON.stringify(item).replace(/'/g, "\\'") %>')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-dark" data-item="<%- encodeURIComponent(JSON.stringify(item)) %>" onclick="editItem(this)">Edit</button>
                                     <form action="/restaurant-admin/<%= item.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this item?')">
                                         <button class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
@@ -104,8 +104,8 @@
 </div>
 
 <script>
-function editItem(data) {
-    const item = JSON.parse(data);
+function editItem(button) {
+    const item = JSON.parse(decodeURIComponent(button.dataset.item));
     document.getElementById('item_id').value = item.id;
     document.getElementById('item_cat').value = item.category;
     document.getElementById('item_name').value = item.name;

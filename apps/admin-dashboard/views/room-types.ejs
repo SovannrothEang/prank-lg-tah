@@ -20,7 +20,7 @@
                 <span class="fs-4 fw-bold text-primary">$<%= type.base_price %></span>
                 <% if (user.role === 'admin' || user.role === 'manager') { %>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-dark" onclick="editType('<%- JSON.stringify(type).replace(/'/g, "\\'") %>')">Edit</button>
+                        <button class="btn btn-sm btn-outline-dark" data-type="<%- encodeURIComponent(JSON.stringify(type)) %>" onclick="editType(this)">Edit</button>
                         <form action="/room-types/<%= type.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this room type?')">
                             <button class="btn btn-sm btn-outline-danger">Delete</button>
                         </form>
@@ -72,8 +72,8 @@
 </div>
 
 <script>
-function editType(data) {
-    const type = JSON.parse(data);
+function editType(button) {
+    const type = JSON.parse(decodeURIComponent(button.dataset.type));
     document.getElementById('type_id').value = type.id;
     document.getElementById('type_name').value = type.name;
     document.getElementById('type_desc').value = type.description;
