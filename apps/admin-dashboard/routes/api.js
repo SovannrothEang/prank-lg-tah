@@ -101,16 +101,55 @@ module.exports = (db, io) => {
         }
     });
 
+    // GET /api/restaurant/menu - Public menu view
+    router.get('/api/restaurant/menu', async (req, res) => {
+        try {
+            const menu = await db.all('SELECT * FROM menu_items WHERE is_available = 1 ORDER BY category, name');
+            return successResponse(res, menu);
+        } catch (error) {
+            console.error('[API_MENU_ERROR]:', error);
+            return errorResponse(res, 'Could not fetch culinary selection');
+        }
+    });
+
     router.get('/api/bookings/:uuid/status', async (req, res) => {
         try {
             const booking = await db.get(
-                'SELECT uuid, guest_name, status, check_in_date, check_out_date, total_price, created_at FROM bookings WHERE uuid = ?',
+                'SELECT b.uuid, b.guest_name, b.status, b.check_in_date, b.check_out_date, b.total_price, b.created_at, g.is_vip, g.created_at as member_since FROM bookings b LEFT JOIN guests g ON b.guest_id = g.id WHERE b.uuid = ?',
                 [req.params.uuid]
             );
             if (!booking) return errorResponse(res, 'Booking not found', 'NOT_FOUND', 404);
             return successResponse(res, booking);
         } catch (error) {
             return errorResponse(res, 'Could not fetch booking status');
+        }
+    });
+
+    // POST /api/guest/login-by-phone (Simple auth for demo/prototype)
+    router.post('/api/guest/login', async (req, res) => {
+        const { phone_number } = req.body;
+        try {
+            const guest = await db.get(`
+                SELECT g.*, 
+                (SELECT COUNT(*) FROM bookings WHERE guest_id = g.id AND status IN ('approved', 'checked_in', 'checked_out')) as stay_count,
+                (SELECT SUM(total_price) FROM bookings WHERE guest_id = g.id AND status IN ('approved', 'checked_in', 'checked_out')) as total_spend
+                FROM guests g WHERE phone_number = ?
+            `, [phone_number]);
+
+            if (!guest) return errorResponse(res, 'Guest profile not found', 'NOT_FOUND', 404);
+
+            const stays = await db.all(`
+                SELECT b.*, r.room_number, rt.name as type_name
+                FROM bookings b
+                JOIN rooms r ON b.room_id = r.id
+                JOIN room_types rt ON r.room_type_id = rt.id
+                WHERE b.guest_id = ?
+                ORDER BY b.check_in_date DESC
+            `, [guest.id]);
+
+            return successResponse(res, { guest, stays });
+        } catch (error) {
+            return errorResponse(res, 'Verification failed');
         }
     });
 

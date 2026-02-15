@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import { getRestaurantMenu } from '../services/api';
+import useLanguage from '../hooks/useLanguage';
 
 const Restaurant = () => {
   const [category, setCategory] = useState('food');
   const [menu, setMenu] = useState({ food: [], deserts: [], wine: [] });
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/restaurant/menu').then(res => {
-      const menuData = res.data.data || [];
-      const organized = menuData.reduce((acc, item) => {
+    getRestaurantMenu().then(data => {
+      const organized = data.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
       }, { food: [], deserts: [], wine: [] });
       setMenu(organized);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
       setLoading(false);
     });
   }, []);
@@ -28,8 +32,11 @@ const Restaurant = () => {
 
   if (loading) return (
     <div className="h-screen bg-[#080808] flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="text-[10px] tracking-[1em] uppercase text-stone-600 animate-pulse font-bold">Gastronomy</div>
+      <div className="text-center space-y-6">
+        <div className="text-sm tracking-[0.8em] uppercase text-stone-600 animate-pulse font-bold">
+          {t('Gastronomy', 'សិល្បៈម្ហូបអាហារ')}
+        </div>
+        <div className="h-px w-12 bg-stone-800 mx-auto" />
       </div>
     </div>
   );

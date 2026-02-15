@@ -14,3 +14,13 @@ export const createBookingRequest = async (bookingData) => {
     });
     return response.data;
 };
+
+export const guestLogin = async (phoneNumber) => {
+    const response = await axios.post(`${API_URL}/guest/login`, { phone_number: phoneNumber });
+    return response.data;
+};
+
+export const getRestaurantMenu = async () => {
+    const response = await axios.get(`${API_URL}/restaurant/menu`);
+    return response.data.data;
+};

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createBookingRequest } from '../services/api';
+import useLanguage from '../hooks/useLanguage';
 
 const Booking = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const roomInfo = location.state || {};
 
   const [formData, setFormData] = useState({
@@ -76,7 +78,11 @@ const Booking = () => {
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
           >
-            <span className="text-stone-500 tracking-[0.5em] uppercase text-[9px] block mb-8 font-bold">Initiating Reservation</span>
+            <span className="text-stone-500 tracking-[0.5em] uppercase text-[9px] block mb-8 font-bold flex items-center gap-4">
+              <span className="khmer-font tracking-normal font-normal">ជំហានចុងក្រោយ</span>
+              <span className="w-8 h-px bg-stone-800" />
+              <span>Initiating Reservation</span>
+            </span>
             <h1 className="text-6xl md:text-7xl leading-none font-serif mb-12 italic">The <br/> {roomInfo.roomType}</h1>
             <div className="h-px w-32 bg-stone-700" />
           </motion.div>
@@ -86,8 +92,8 @@ const Booking = () => {
                 <span className="text-stone-500 text-[10px] uppercase tracking-[0.4em]">Base Nightly</span>
                 <span className="text-2xl font-serif text-stone-100">${roomInfo.price?.toLocaleString()}</span>
              </div>
-             <p className="text-stone-500 text-sm leading-relaxed italic">
-               Please provide your official identification details. Elysian maintains a strict privacy protocol for all residents.
+             <p className="text-stone-500 text-sm leading-relaxed italic khmer-font tracking-normal">
+               សូមផ្តល់ព័ត៌មានអត្តសញ្ញាណប័ណ្ណផ្លូវការរបស់អ្នក។ អេលីសៀន រក្សាពិធីការឯកជនភាពយ៉ាងតឹងរ៉ឹងបំផុត។
              </p>
           </div>
         </div>
@@ -102,7 +108,7 @@ const Booking = () => {
           <form onSubmit={handleSubmit} className="space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors">Legal Full Name</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors font-bold">{t('Legal Full Name', 'ឈ្មោះពេញផ្លូវការ')}</label>
                 <input 
                   type="text" 
                   required
@@ -111,7 +117,7 @@ const Booking = () => {
                 />
               </div>
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors">Official Contact</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors font-bold">{t('Official Contact', 'លេខទូរស័ព្ទផ្លូវការ')}</label>
                 <input 
                   type="tel" 
                   required
@@ -123,7 +129,7 @@ const Booking = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors">Telegram Handle</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors font-bold">{t('Telegram Handle', 'គណនីតេឡេក្រាម')}</label>
                 <input 
                   type="text" 
                   placeholder="@username"
@@ -132,7 +138,7 @@ const Booking = () => {
                 />
               </div>
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors">Email Address</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block group-focus-within:text-stone-100 transition-colors font-bold">{t('Email Address', 'អាសយដ្ឋានអ៊ីមែល')}</label>
                 <input 
                   type="email" 
                   className="w-full bg-transparent border-b border-stone-800 py-4 focus:outline-none focus:border-stone-100 transition-all font-light text-stone-100"
@@ -143,7 +149,7 @@ const Booking = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block">Arrival Date</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block font-bold">{t('Arrival Date', 'ថ្ងៃចូលស្នាក់នៅ')}</label>
                 <input 
                   type="date" 
                   required
@@ -152,7 +158,7 @@ const Booking = () => {
                 />
               </div>
               <div className="group relative">
-                <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block">Departure Date</label>
+                <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block font-bold">{t('Departure Date', 'ថ្ងៃចេញពីស្នាក់នៅ')}</label>
                 <input 
                   type="date" 
                   required
@@ -163,10 +169,10 @@ const Booking = () => {
             </div>
 
             <div className="group relative">
-              <label className="text-[10px] uppercase tracking-[0.4em] text-stone-500 mb-3 block">Bespoke Requirements</label>
+              <label className="text-xs uppercase tracking-[0.1em] text-stone-500 mb-3 block font-bold">{t('Bespoke Requirements', 'តម្រូវការពិសេស')}</label>
               <textarea 
                 rows="4"
-                placeholder="Pillow preference, dietary restrictions, vault access..."
+                placeholder={t("Pillow preference, dietary restrictions, vault access...", "ចំណូលចិត្តខ្នើយ ការរឹតត្បិតរបបអាហារ ការចូលប្រើតុដេក...")}
                 className="w-full bg-transparent border border-stone-800 p-6 focus:outline-none focus:border-stone-100 transition-all font-light text-sm italic text-stone-200"
                 onChange={e => setFormData({...formData, special_requests: e.target.value})}
               />
@@ -176,7 +182,7 @@ const Booking = () => {
               disabled={status === 'loading'}
               className="luxury-button w-full flex items-center justify-center gap-4 group"
             >
-              {status === 'loading' ? 'Encrypting Data...' : 'Submit Inquiry'}
+              {status === 'loading' ? t('Encrypting Data...', 'កំពុងរក្សាទុកទិន្នន័យ...') : t('Submit Inquiry', 'បញ្ជូនសំណើ')}
               <span className="w-8 h-px bg-current group-hover:w-16 transition-all" />
             </button>
             

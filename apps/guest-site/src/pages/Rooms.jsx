@@ -2,25 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { getAvailableRooms } from '../services/api';
 import { Link } from 'react-router-dom';
+import useLanguage from '../hooks/useLanguage';
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t, lang } = useLanguage();
   const { scrollY } = useScroll();
   const titleY = useTransform(scrollY, [0, 400], [0, 100]);
 
   useEffect(() => {
     getAvailableRooms().then(data => {
-      setRooms(data);
+      setRooms(data || []);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
       setLoading(false);
     });
   }, []);
 
   if (loading) return (
     <div className="h-screen bg-[#080808] flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="text-[10px] tracking-[1em] uppercase text-stone-600 animate-pulse">Elysian</div>
-        <div className="h-px w-20 bg-stone-800 mx-auto" />
+      <div className="text-center space-y-6">
+        <div className="text-sm tracking-[0.8em] uppercase text-stone-600 animate-pulse font-bold">
+          {t('Residences', 'លំនៅដ្ឋាន')}
+        </div>
+        <div className="h-px w-12 bg-stone-800 mx-auto" />
       </div>
     </div>
   );
@@ -36,9 +43,9 @@ const Rooms = () => {
             style={{ y: titleY }}
             className="lg:col-span-8"
           >
-            <span className="text-stone-500 tracking-[0.5em] uppercase text-[10px] block mb-8 font-bold">Residential Portfolio</span>
+            <span className="text-stone-500 tracking-[0.3em] uppercase text-xs block mb-8 font-bold">{t('Residential Portfolio', 'បណ្តុំលំនៅដ្ឋាន')}</span>
             <h1 className="text-7xl md:text-[10rem] leading-[0.85] font-serif tracking-tighter">
-              Private <br/> <span className="italic font-light text-stone-400">Sanctuaries.</span>
+              {t('Private', 'ឯកជនភាព')} <br/> <span className="italic font-light text-stone-400">{t('Sanctuaries.', 'នៃដែនជម្រក។')}</span>
             </h1>
           </motion.div>
           <motion.div 
@@ -47,9 +54,8 @@ const Rooms = () => {
             transition={{ delay: 0.5, duration: 1.5 }}
             className="lg:col-span-4 border-l border-stone-800 ps-10 pb-4"
           >
-             <p className="text-stone-500 text-sm leading-relaxed max-w-xs">
-              A curated collection of residences designed for the modern aesthete. 
-              Meticulous craftsmanship meets unprecedented comfort.
+             <p className="text-stone-500 text-sm leading-relaxed max-w-xs italic">
+              {t('A curated collection of residences designed for the modern aesthete. Meticulous craftsmanship meets unprecedented comfort.', 'ការប្រមូលផ្តុំនៃលំនៅដ្ឋានដែលត្រូវបានរៀបចំឡើងសម្រាប់សោភ័ណភាពទំនើប។ ស្នាដៃដ៏ល្អិតល្អន់ជួបនឹងភាពងាយស្រួលដែលមិនធ្លាប់មាន។')}
             </p>
           </motion.div>
         </div>
@@ -78,14 +84,14 @@ const Rooms = () => {
                 {/* Hover UI */}
                 <div className="absolute inset-0 p-12 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-1000">
                   <div className="flex justify-end">
-                    <span className="text-[9px] tracking-[0.4em] uppercase text-white bg-white/10 backdrop-blur-md px-4 py-2">Available Now</span>
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-white bg-white/10 backdrop-blur-md px-4 py-2 font-bold">{t('Available Now', 'នៅទំនេរឥឡូវនេះ')}</span>
                   </div>
                   <Link 
                     to="/booking" 
                     state={{ roomUuid: room.uuid, roomType: room.type_name, price: room.base_price }}
                     className="luxury-button !bg-white !text-black !border-white text-center translate-y-10 group-hover:translate-y-0 transition-transform duration-700"
                   >
-                    Initiate Reservation
+                    {t('Initiate Reservation', 'ចាប់ផ្តើមការកក់')}
                   </Link>
                 </div>
               </div>
@@ -94,17 +100,17 @@ const Rooms = () => {
                 <div className="flex justify-between items-end">
                   <h3 className="text-4xl md:text-5xl font-serif">{room.type_name}</h3>
                   <div className="text-right">
-                    <span className="text-stone-500 text-[9px] uppercase tracking-[0.4em] block mb-1">Nightly Rate</span>
+                    <span className="text-stone-500 text-[10px] uppercase tracking-[0.2em] block mb-1 font-bold">{t('Nightly Rate', 'តម្លៃក្នុងមួយយប់')}</span>
                     <span className="text-2xl font-serif text-stone-200">${room.base_price.toLocaleString()}</span>
                   </div>
                 </div>
                 
                 <div className="h-px bg-stone-800 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-1000" />
                 
-                <div className="flex justify-between text-stone-500 text-[10px] uppercase tracking-[0.4em] pt-2">
-                  <span>Panoramic View</span>
-                  <span>Personal Butler</span>
-                  <span>Vault Access</span>
+                <div className={`flex justify-between text-stone-500 text-[11px] uppercase tracking-[0.1em] pt-2 font-bold ${lang === 'kh' ? 'khmer-font' : ''}`}>
+                  <span>{t('Panoramic View', 'ទិដ្ឋភាពទូទៅ')}</span>
+                  <span>{t('Personal Butler', 'អ្នកបម្រើផ្ទាល់ខ្លួន')}</span>
+                  <span>{t('Vault Access', 'ការចូលប្រើតុដេក')}</span>
                 </div>
               </div>
             </motion.div>
