@@ -16,10 +16,10 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted small">
                     <tr>
-                        <th class="ps-4">Item</th>
-                        <th>Price</th>
-                        <th>Visibility</th>
-                        <th class="text-end pe-4">Actions</th>
+                        <th class="ps-4" style="width: 40%">Item</th>
+                        <th class="text-center" style="width: 20%">Price</th>
+                        <th class="text-center" style="width: 20%">Visibility</th>
+                        <th class="text-end pe-4" style="width: 20%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,8 +29,8 @@
                             <div class="fw-bold"><%= item.name %></div>
                             <div class="small text-muted"><%= item.description %></div>
                         </td>
-                        <td class="fw-bold">$<%= item.price.toFixed(2) %></td>
-                        <td>
+                        <td class="fw-bold text-center">$<%= item.price.toFixed(2) %></td>
+                        <td class="text-center">
                             <span class="badge <%= item.is_available ? 'bg-success' : 'bg-secondary' %> status-badge">
                                 <%= item.is_available ? 'Live' : 'Hidden' %>
                             </span>

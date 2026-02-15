@@ -67,8 +67,8 @@
                             </td>
                             <td class="small"><%= b.room_number %></td>
                             <td>
-                                <div class="fw-bold text-danger">$<%= b.balance.toFixed(2) %></div>
-                                <div class="text-muted" style="font-size: 0.7rem;">of $<%= b.total_price.toFixed(2) %></div>
+                                <div class="fw-bold text-danger">$<%= (b.balance || 0).toFixed(2) %></div>
+                                <div class="text-muted" style="font-size: 0.7rem;">of $<%= (b.room_rate || 0).toFixed(2) %></div>
                             </td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-success" onclick="quickPay(<%= b.id %>, '<%= b.guest_name.replace(/'/g, "\\'") %>', <%= b.balance %>)">Pay</button>

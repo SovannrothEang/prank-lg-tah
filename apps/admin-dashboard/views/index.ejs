@@ -1,26 +1,27 @@
 <%- include('partials/header'); %>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-<div class="d-flex justify-content-between align-items-center mb-5">
+<div class="page-header d-flex justify-content-between align-items-center">
     <div>
-        <h2 class="font-serif text-dark tracking-tight">Executive Dashboard</h2>
+        <h2 class="font-serif text-dark tracking-tight mb-1">Executive Overview</h2>
         <div class="d-flex align-items-center gap-2">
             <span class="pulse-indicator"></span>
-            <span class="text-[10px] uppercase tracking-[0.2em] text-muted fw-bold">Live System Sync</span>
+            <span class="text-muted fw-bold tracking-widest" style="font-size: 0.65rem; text-transform: uppercase;">Live System Status</span>
         </div>
     </div>
 </div>
 
 <div class="row g-4 mb-5">
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100 bg-dark text-white">
-            <span class="text-[10px] uppercase tracking-widest opacity-50 mb-1">Total Revenue</span>
-            <h2 class="font-serif text-amber-200 mb-0">$<%= (stats.revenue || 0).toLocaleString() %></h2>
+        <div class="card metric-card border-0 shadow-sm p-4 h-100 bg-dark text-white">
+            <span class="opacity-50 mb-1 tracking-widest uppercase" style="font-size: 0.65rem;">Total Revenue</span>
+            <h2 class="font-serif text-white mb-0">$<%= (stats.revenue || 0).toLocaleString() %></h2>
+            <div class="mt-3 small opacity-50">LTD Revenue Stream</div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Occupancy</span>
+        <div class="card metric-card border-0 shadow-sm p-4 h-100">
+            <span class="text-muted mb-1 tracking-widest uppercase" style="font-size: 0.65rem;">Occupancy</span>
             <h2 class="font-serif text-dark mb-0"><%= stats.occupancyRate %>%</h2>
             <div class="progress mt-3" style="height: 4px;">
                 <div class="progress-bar bg-dark" style="width: <%= stats.occupancyRate %>%"></div>
@@ -28,15 +29,17 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Pending</span>
-            <h2 class="font-serif text-warning mb-0"><%= stats.pendingRequests %></h2>
+        <div class="card metric-card border-0 shadow-sm p-4 h-100">
+            <span class="text-muted mb-1 tracking-widest uppercase" style="font-size: 0.65rem;">Pending Requests</span>
+            <h2 class="font-serif text-dark mb-0"><%= stats.pendingRequests %></h2>
+            <div class="mt-3 small text-warning fw-bold uppercase" style="font-size: 0.6rem;">Action Required</div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <span class="text-[10px] uppercase tracking-widest text-muted mb-1">Available Rooms</span>
+        <div class="card metric-card border-0 shadow-sm p-4 h-100">
+            <span class="text-muted mb-1 tracking-widest uppercase" style="font-size: 0.65rem;">Available Rooms</span>
             <h2 class="font-serif text-dark mb-0"><%= stats.totalRooms - stats.occupiedRooms %></h2>
+            <div class="mt-3 small text-muted">Ready for Check-in</div>
         </div>
     </div>
 </div>
@@ -88,9 +91,10 @@
             series: rawStatus.map(d => d.count),
             labels: rawStatus.map(d => d.status.toUpperCase()),
             chart: { type: 'donut', height: 300 },
-            colors: ['#18181b', '#f59e0b', '#ef4444', '#10b981'],
+            colors: ['#09090b', '#71717a', '#27272a', '#e4e4e7'],
             dataLabels: { enabled: false },
-            plotOptions: { pie: { donut: { size: '75%' } } }
+            plotOptions: { pie: { donut: { size: '75%' } } },
+            legend: { position: 'bottom', fontFamily: 'Inter' }
         };
         new ApexCharts(document.querySelector("#statusDoughnutChart"), statusOptions).render();
     })();

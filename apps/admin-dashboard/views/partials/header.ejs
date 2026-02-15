@@ -4,34 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel Management | Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         :root {
-            --bg-color: #f4f4f5;
-            --sidebar-color: #18181b;
-            --primary-accent: #3b82f6;
+            --bg-color: #fcfcfc;
+            --sidebar-color: #09090b;
+            --primary-accent: #18181b;
+            --border-color: #e4e4e7;
+            --text-main: #09090b;
+            --text-muted: #71717a;
+            --zinc-50: #fafafa;
+            --zinc-100: #f4f4f5;
+            --zinc-200: #e4e4e7;
+            --zinc-300: #d4d4d8;
+            --zinc-800: #27272a;
+            --zinc-900: #18181b;
+            --zinc-950: #09090b;
         }
-        body { background-color: var(--bg-color); font-family: 'Inter', sans-serif; }
-        .sidebar { height: 100vh; background-color: var(--sidebar-color); color: white; padding-top: 2rem; position: fixed; width: 250px; overflow-y: auto; }
-        .sidebar a { color: #a1a1aa; text-decoration: none; padding: 0.75rem 1.5rem; display: block; font-size: 0.875rem; }
-        .sidebar a:hover, .sidebar a.active { color: white; background-color: #27272a; }
-        .sidebar .nav-section { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; padding: 1.25rem 1.5rem 0.5rem; }
-        .main-content { margin-left: 250px; padding: 2rem; }
-        .card { border: none; border-radius: 0; border-bottom: 2px solid #e4e4e7; }
-        .btn-primary { border-radius: 0; background-color: var(--primary-accent); border: none; }
-        table { background: white; border: 1px solid #e4e4e7; }
-        .status-badge { font-size: 0.75rem; text-transform: uppercase; font-weight: bold; padding: 0.25rem 0.5rem; }
-        .alert-bar { position: fixed; top: 0; left: 250px; right: 0; z-index: 1050; }
-        .pagination .page-link { border-radius: 0; color: #18181b; }
-        .pagination .page-item.active .page-link { background-color: #18181b; border-color: #18181b; }
-        .search-bar { max-width: 300px; }
+        body { background-color: var(--bg-color); font-family: 'Inter', sans-serif; color: var(--text-main); }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        
+        .sidebar { height: 100vh; background-color: var(--sidebar-color); color: white; padding-top: 2rem; position: fixed; width: 260px; overflow-y: auto; border-right: 1px solid var(--zinc-800); }
+        .sidebar .brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; letter-spacing: 0.1em; padding: 0 1.5rem 2rem; border-bottom: 1px solid var(--zinc-800); margin-bottom: 1.5rem; }
+        .sidebar a { color: #a1a1aa; text-decoration: none; padding: 0.65rem 1.5rem; display: flex; align-items: center; font-size: 0.85rem; transition: all 0.2s ease; border-left: 3px solid transparent; }
+        .sidebar a:hover { color: white; background-color: var(--zinc-900); }
+        .sidebar a.active { color: white; background-color: var(--zinc-900); border-left-color: white; font-weight: 500; }
+        
+        .sidebar .nav-section { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: #52525b; padding: 1.5rem 1.5rem 0.5rem; font-weight: 600; }
+        
+        .main-content { margin-left: 260px; padding: 3rem 4rem; }
+        
+        .card { border: 1px solid var(--zinc-200); border-radius: 0; box-shadow: none; background: white; }
+        .card-header { background: var(--zinc-50); border-bottom: 1px solid var(--zinc-200); padding: 1rem 1.5rem; }
+        
+        .btn { border-radius: 0; font-size: 0.85rem; padding: 0.5rem 1.25rem; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background-color: var(--zinc-900); border: 1px solid var(--zinc-900); color: white; }
+        .btn-primary:hover { background-color: var(--zinc-950); border-color: var(--zinc-950); }
+        .btn-outline-dark { border-color: var(--zinc-300); color: var(--zinc-900); }
+        .btn-outline-dark:hover { background-color: var(--zinc-900); color: white; border-color: var(--zinc-900); }
+        
+        table { border: 1px solid var(--zinc-200); }
+        .table thead th { background-color: var(--zinc-50); color: var(--zinc-950); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; padding: 1rem; border-bottom: 1px solid var(--zinc-200); }
+        .table tbody td { padding: 1rem; border-bottom: 1px solid var(--zinc-100); font-size: 0.875rem; }
+        
+        .status-badge { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; padding: 0.35rem 0.65rem; border-radius: 0; letter-spacing: 0.05em; }
+        
+        .search-bar .form-control { border-radius: 0; border: 1px solid var(--zinc-200); padding: 0.5rem 1rem; font-size: 0.85rem; }
+        .search-bar .form-control:focus { box-shadow: none; border-color: var(--zinc-950); }
+        
+        .pagination .page-link { border-radius: 0; color: var(--zinc-900); border-color: var(--zinc-200); padding: 0.5rem 0.85rem; }
+        .pagination .page-item.active .page-link { background-color: var(--zinc-900); border-color: var(--zinc-900); color: white; }
+        
+        /* Custom UI additions */
+        .page-header { border-bottom: 1px solid var(--zinc-200); margin-bottom: 2.5rem; padding-bottom: 1.5rem; }
+        .metric-card { transition: transform 0.2s ease; }
+        .metric-card:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h4 class="px-4 mb-2">ELYSIAN</h4>
+        <div class="brand">ELYSIAN</div>
         <% if (locals.user) { %>
-            <p class="px-4 text-muted small mb-4">User: <%= user.name %> (<%= user.role %>)</p>
+            <div class="px-4 mb-4">
+                <div class="small text-muted mb-1 uppercase tracking-widest" style="font-size: 0.6rem;">Authenticated As</div>
+                <div class="fw-bold" style="font-size: 0.9rem;"><%= user.name %></div>
+                <div class="text-muted" style="font-size: 0.75rem;"><%= user.role.toUpperCase() %></div>
+            </div>
         <% } %>
         
         <div class="nav-section">Operations</div>

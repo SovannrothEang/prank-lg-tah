@@ -109,7 +109,9 @@
                                 <button class="btn btn-sm btn-outline-danger">Cancel</button>
                             </form>
                         <% } %>
-                        <a href="/bookings/<%= booking.id %>/invoice" class="btn btn-sm btn-outline-dark">Invoice</a>
+                        <% if (['approved', 'checked_in', 'checked_out'].includes(booking.status)) { %>
+                            <a href="/bookings/<%= booking.id %>/invoice" class="btn btn-sm btn-outline-dark">Invoice</a>
+                        <% } %>
                     </div>
                 </td>
             </tr>

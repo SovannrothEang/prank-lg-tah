@@ -49,6 +49,7 @@ module.exports = (db) => {
             FROM bookings b
             LEFT JOIN rooms r ON b.room_id = r.id
             WHERE b.status IN ('approved', 'checked_in', 'checked_out')
+            AND b.room_id IS NOT NULL
         `);
 
         // Calculate dynamic balances in JS for clarity and handling edge cases
@@ -60,11 +61,15 @@ module.exports = (db) => {
         const filteredUnpaid = unpaidBookings.filter(b => b.balance > 0.01).sort((a,b) => b.balance - a.balance);
 
         // Summary stats
+        const totalCollectedData = await db.get('SELECT COALESCE(SUM(amount), 0) as total FROM payments');
+        const todayCollectedData = await db.get("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE date(created_at) = date('now')");
+        const paymentCountData = await db.get('SELECT COUNT(*) as count FROM payments');
+
         const stats = {
-            totalCollected: (await db.get('SELECT COALESCE(SUM(amount), 0) as total FROM payments')).total,
-            todayCollected: (await db.get("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE date(created_at) = date('now')")).total,
+            totalCollected: totalCollectedData.total,
+            todayCollected: todayCollectedData.total,
             outstandingBalance: unpaidBookings.reduce((sum, b) => sum + Math.max(0, b.balance), 0),
-            paymentCount: (await db.get('SELECT COUNT(*) as count FROM payments')).count,
+            paymentCount: paymentCountData.count,
             byMethod: await db.all('SELECT payment_method, SUM(amount) as total FROM payments GROUP BY payment_method')
         };
 

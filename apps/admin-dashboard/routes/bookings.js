@@ -305,7 +305,13 @@ module.exports = (db) => {
     // GET /bookings/:id/invoice - PDF Invoice
     router.get('/bookings/:id/invoice', checkAuth, async (req, res) => {
         const b = await db.get('SELECT b.*, r.room_number, rt.name as type_name FROM bookings b JOIN rooms r ON b.room_id = r.id JOIN room_types rt ON r.room_type_id = rt.id WHERE b.id = ?', [req.params.id]);
+        
         if (!b) return res.status(404).send('Not Found');
+        
+        // Security: Don't allow invoices for rejected or pending bookings
+        if (['rejected', 'pending', 'cancelled'].includes(b.status)) {
+            return res.status(403).send('Invoice unavailable for current booking status');
+        }
 
         const charges = await db.all('SELECT * FROM room_charges WHERE booking_id = ? ORDER BY created_at', [b.id]);
         const payments = await db.all('SELECT * FROM payments WHERE booking_id = ? ORDER BY created_at', [b.id]);

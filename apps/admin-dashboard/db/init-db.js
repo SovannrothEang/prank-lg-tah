@@ -205,8 +205,11 @@ async function initDb() {
     await addColumn('payments', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
 
     // Backfill missing UUIDs across all tables
-    const tablesToBackfill = ['users', 'room_types', 'rooms', 'bookings', 'menu_items', 'guests'];
+    const tablesToBackfill = ['users', 'room_types', 'rooms', 'bookings', 'menu_items', 'guests', 'room_charges'];
     for (const table of tablesToBackfill) {
+        const columns = await db.all(`PRAGMA table_info(${table})`);
+        if (!columns.find(c => c.name === 'uuid')) continue;
+        
         const rows = await db.all(`SELECT id FROM ${table} WHERE uuid IS NULL OR uuid = ''`);
         for (const row of rows) {
             await db.run(`UPDATE ${table} SET uuid = ? WHERE id = ?`, [uuidv4(), row.id]);
@@ -220,6 +223,11 @@ async function initDb() {
         
         if (!guest) {
             const guestUuid = uuidv4();
+            // Skip migration if phone_number is missing to avoid constraint failure
+            if (!booking.phone_number) {
+                console.warn(`[MIGRATE] Skipping orphaned booking ID ${booking.id} due to missing phone number`);
+                continue;
+            }
             const result = await db.run(
                 'INSERT INTO guests (uuid, full_name, phone_number, email, telegram) VALUES (?, ?, ?, ?, ?)',
                 [guestUuid, booking.guest_name, booking.phone_number, booking.guest_email, booking.telegram]
