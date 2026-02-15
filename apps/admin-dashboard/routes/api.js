@@ -13,7 +13,7 @@ module.exports = (db, io) => {
             let rooms;
             if (check_in && check_out) {
                 rooms = await db.all(`
-                    SELECT r.uuid, r.room_number, rt.name as type_name, rt.base_price, rt.description
+                    SELECT r.uuid, r.room_number, r.image_path, rt.name as type_name, rt.base_price, rt.description
                     FROM rooms r 
                     JOIN room_types rt ON r.room_type_id = rt.id 
                     WHERE r.is_active = 1 
@@ -28,7 +28,7 @@ module.exports = (db, io) => {
                 `, [check_out, check_in]);
             } else {
                 rooms = await db.all(`
-                    SELECT r.uuid, r.room_number, rt.name as type_name, rt.base_price, rt.description
+                    SELECT r.uuid, r.room_number, r.image_path, rt.name as type_name, rt.base_price, rt.description
                     FROM rooms r 
                     JOIN room_types rt ON r.room_type_id = rt.id 
                     WHERE r.status = 'available' 

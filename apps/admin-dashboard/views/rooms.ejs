@@ -105,13 +105,20 @@
 <!-- Modal -->
 <div class="modal fade" id="roomModal" tabindex="-1">
     <div class="modal-dialog">
-        <form action="/rooms" method="POST" class="modal-content border-0 rounded-0">
+        <form action="/rooms" method="POST" enctype="multipart/form-data" class="modal-content border-0 rounded-0">
             <div class="modal-header bg-dark text-white border-0">
                 <h5 class="modal-title fw-bold">Room Configuration</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <input type="hidden" name="id" id="room_id">
+                <div class="mb-3 text-center">
+                    <div id="image_preview" class="mb-2 mx-auto overflow-hidden border bg-light d-flex align-items-center justify-center" style="width: 150px; height: 100px;">
+                        <span class="text-muted small">No Image</span>
+                    </div>
+                    <label class="form-label small fw-bold d-block">ROOM IMAGE</label>
+                    <input type="file" name="room_image" id="room_img_input" class="form-control form-control-sm" accept="image/*">
+                </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold">ROOM NUMBER</label>
                     <input type="text" name="room_number" id="room_num" class="form-control" placeholder="e.g. 101" required>
@@ -153,8 +160,23 @@ function editRoom(data) {
     document.getElementById('room_type').value = room.room_type_id;
     document.getElementById('room_status').value = room.status;
     document.getElementById('room_active').checked = room.is_active === 1;
+    
+    const preview = document.getElementById('image_preview');
+    if (room.image_path) {
+        preview.innerHTML = `<img src="${room.image_path}" class="w-100 h-100 object-fit-cover">`;
+    } else {
+        preview.innerHTML = '<span class="text-muted small">No Image</span>';
+    }
+    
     new bootstrap.Modal(document.getElementById('roomModal')).show();
 }
+
+// Reset image preview when adding new room
+document.querySelector('[data-bs-target="#roomModal"]').addEventListener('click', () => {
+    document.getElementById('room_id').value = '';
+    document.getElementById('room_num').value = '';
+    document.getElementById('image_preview').innerHTML = '<span class="text-muted small">No Image</span>';
+});
 </script>
 
 <%- include('partials/footer') %>

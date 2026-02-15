@@ -75,7 +75,7 @@ const Rooms = () => {
             >
               <div className="relative overflow-hidden aspect-[4/5] mb-12 bg-zinc-900">
                 <img 
-                  src={`https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop`} 
+                  src={room.image_path ? `http://localhost:3000${room.image_path}` : `https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop`} 
                   alt={room.type_name}
                   className="w-full h-full object-cover transition-transform duration-[2.5s] ease-out group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0"
                 />

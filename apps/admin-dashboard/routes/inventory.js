@@ -1,9 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { auth, managerOnly } = require('../middleware/auth');
 const { validate, roomTypeSchema, roomSchema } = require('../middleware/validate');
 const AuditService = require('../services/AuditService');
+
+// Ensure rooms directory exists
+const roomsDir = path.join(__dirname, '../public/rooms');
+if (!fs.existsSync(roomsDir)) {
+    fs.mkdirSync(roomsDir, { recursive: true });
+}
+
+// Multer config for room images
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, roomsDir);
+    },
+    filename: (req, file, cb) => {
+        // We'll rename it later with the room ID, for now use a temp name or timestamp
+        cb(null, `room_${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype && file.mimetype.startsWith('image/')) return cb(null, true);
+        return cb(new Error('Only image uploads are allowed'));
+    }
+});
 
 module.exports = (db) => {
     const checkAuth = auth(db);
@@ -77,14 +104,14 @@ module.exports = (db) => {
         }
 
         const total = (await db.get(`SELECT COUNT(*) as count FROM rooms r JOIN room_types rt ON r.room_type_id = rt.id WHERE ${whereClause}`, params)).count;
-        const rooms = await db.all(`
-            SELECT r.*, rt.name as type_name 
-            FROM rooms r 
-            JOIN room_types rt ON r.room_type_id = rt.id 
-            WHERE ${whereClause}
-            ORDER BY r.room_number
-            LIMIT ? OFFSET ?
-        `, [...params, limit, offset]);
+            const rooms = await db.all(`
+                SELECT r.*, rt.name as type_name 
+                FROM rooms r 
+                JOIN room_types rt ON r.room_type_id = rt.id 
+                WHERE ${whereClause}
+                ORDER BY r.room_number
+                LIMIT ? OFFSET ?
+            `, [...params, limit, offset]);
         const types = await db.all('SELECT * FROM room_types WHERE is_active = 1 AND deleted_at IS NULL');
         
         res.render('rooms', { 
@@ -95,23 +122,78 @@ module.exports = (db) => {
         });
     });
 
-    router.post('/rooms', checkAuth, managerOnly, validate(roomSchema), async (req, res) => {
+    router.post('/rooms', checkAuth, managerOnly, upload.single('room_image'), validate(roomSchema), async (req, res) => {
         const { id, room_number, room_type_id, status, is_active } = req.validatedBody;
         try {
+            let imagePath = null;
+            if (req.file) {
+                imagePath = `/rooms/${req.file.filename}`;
+            }
+
             if (id) {
                 const old = await db.get('SELECT * FROM rooms WHERE id = ?', [id]);
-                await db.run('UPDATE rooms SET room_number = ?, room_type_id = ?, status = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-                    [room_number, room_type_id, status, is_active ? 1 : 0, id]);
+                
+                let finalImagePath = imagePath;
+                if (req.file) {
+                    const ext = path.extname(req.file.originalname);
+                    const newFileName = `${id}${ext}`;
+                    const newPath = path.join(roomsDir, newFileName);
+                    
+                    // Rename temp file to ID-based name
+                    if (fs.existsSync(req.file.path)) {
+                        fs.renameSync(req.file.path, newPath);
+                        finalImagePath = `/rooms/${newFileName}`;
+                    }
+                }
+
+                let updateQuery = 'UPDATE rooms SET room_number = ?, room_type_id = ?, status = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP';
+                let params = [room_number, room_type_id, status, is_active ? 1 : 0];
+                
+                if (finalImagePath) {
+                    updateQuery += ', image_path = ?';
+                    params.push(finalImagePath);
+
+                    // Delete old image if it exists and it's different
+                    if (old.image_path && old.image_path !== finalImagePath) {
+                        const oldFileName = path.basename(old.image_path);
+                        const oldPath = path.join(roomsDir, oldFileName);
+                        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+                    }
+                }
+                
+                updateQuery += ' WHERE id = ?';
+                params.push(id);
+                
+                await db.run(updateQuery, params);
                 await audit.log(res.locals.user.id, 'UPDATE', 'rooms', id, { room_number: old.room_number, status: old.status }, { room_number, status });
             } else {
                 // Check for duplicate room number
                 const existing = await db.get('SELECT id FROM rooms WHERE room_number = ? AND deleted_at IS NULL', [room_number]);
-                if (existing) throw new Error(`Room ${room_number} already exists`);
+                if (existing) {
+                    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+                    throw new Error(`Room ${room_number} already exists`);
+                }
 
                 const uuid = uuidv4();
-                await db.run('INSERT INTO rooms (uuid, room_number, room_type_id) VALUES (?, ?, ?)', 
-                    [uuid, room_number, room_type_id]);
-                await audit.log(res.locals.user.id, 'CREATE', 'rooms', null, null, { room_number, room_type_id });
+                const result = await db.run('INSERT INTO rooms (uuid, room_number, room_type_id, status, is_active) VALUES (?, ?, ?, ?, ?)', 
+                    [uuid, room_number, room_type_id, status, is_active ? 1 : 0]);
+                
+                const newId = result.lastID;
+                let finalImagePath = null;
+
+                if (req.file) {
+                    const ext = path.extname(req.file.originalname);
+                    const newFileName = `${newId}${ext}`;
+                    const newPath = path.join(roomsDir, newFileName);
+                    
+                    if (fs.existsSync(req.file.path)) {
+                        fs.renameSync(req.file.path, newPath);
+                        finalImagePath = `/rooms/${newFileName}`;
+                        await db.run('UPDATE rooms SET image_path = ? WHERE id = ?', [finalImagePath, newId]);
+                    }
+                }
+
+                await audit.log(res.locals.user.id, 'CREATE', 'rooms', newId, null, { room_number, room_type_id });
             }
             res.redirect('/rooms');
         } catch (error) {

@@ -44,6 +44,7 @@ async function initDb() {
             room_type_id INTEGER NOT NULL,
             status TEXT CHECK(status IN ('available', 'occupied', 'maintenance', 'dirty')) DEFAULT 'available',
             is_active BOOLEAN DEFAULT 1,
+            image_path TEXT,
             deleted_at DATETIME,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(room_type_id) REFERENCES room_types(id)
@@ -189,6 +190,7 @@ async function initDb() {
     await addColumn('rooms', 'uuid', 'TEXT');
     await addColumn('rooms', 'deleted_at', 'DATETIME');
     await addColumn('rooms', 'updated_at', 'DATETIME');
+    await addColumn('rooms', 'image_path', 'TEXT');
 
     // Bookings
     await addColumn('bookings', 'uuid', 'TEXT');
