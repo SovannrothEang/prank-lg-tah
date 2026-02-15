@@ -1,0 +1,74 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="font-serif mb-1">Guest Relations (CRM)</h2>
+        <p class="text-muted small mb-0"><%= pagination.totalRecords %> guest profiles in database</p>
+    </div>
+    <div class="search-bar">
+        <form action="/guests" method="GET">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Name, phone, telegram..." value="<%= search %>">
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm overflow-hidden">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-dark text-white text-[10px] uppercase tracking-widest">
+            <tr>
+                <th class="ps-4 py-3">Guest Profile</th>
+                <th class="py-3">Contact</th>
+                <th class="py-3">Stays</th>
+                <th class="py-3">Lifetime Value</th>
+                <th class="py-3 text-end pe-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% guests.forEach(guest => { %>
+            <tr class="<%= guest.is_vip ? 'bg-light-gold' : '' %>">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="fw-bold"><%= guest.full_name %></div>
+                        <% if (guest.is_vip) { %>
+                            <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">VIP</span>
+                        <% } %>
+                    </div>
+                    <div class="text-muted small" style="font-size: 0.7rem;">Since <%= new Date(guest.created_at).toLocaleDateString() %></div>
+                </td>
+                <td>
+                    <div class="small fw-bold"><%= guest.phone_number %></div>
+                    <div class="text-muted small"><%= guest.email || 'No email' %></div>
+                    <% if (guest.telegram) { %>
+                        <div class="text-primary small" style="font-size: 0.7rem;">TG: <%= guest.telegram %></div>
+                    <% } %>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border"><%= guest.stay_count %> Stays</span>
+                </td>
+                <td class="fw-bold text-success">
+                    $<%= (guest.total_spend || 0).toLocaleString() %>
+                </td>
+                <td class="text-end pe-4">
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="/guests/<%= guest.id %>" class="btn btn-sm btn-outline-dark">History</a>
+                        <form action="/guests/<%= guest.id %>/vip" method="POST">
+                            <button class="btn btn-sm <%= guest.is_vip ? 'btn-warning' : 'btn-outline-warning text-dark' %>">
+                                <%= guest.is_vip ? 'Remove VIP' : 'Set VIP' %>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <% }) %>
+            <% if (guests.length === 0) { %>
+                <tr><td colspan="5" class="text-center py-5 text-muted">No guest profiles found</td></tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .bg-light-gold { background-color: #fffbeb !important; }
+</style>
+
+<%- include('partials/footer') %>

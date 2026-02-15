@@ -3,7 +3,7 @@
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
         <h2 class="font-serif mb-1">Analytical Intelligence</h2>
-        <p class="text-muted small uppercase tracking-widest">Enterprise Reporting Hub</p>
+        <p class="text-muted small mb-0">Enterprise Reporting Hub</p>
     </div>
     <div class="d-flex gap-2">
         <a href="/reports/excel" class="btn btn-outline-dark btn-sm px-4">Export Full Dataset (XLSX)</a>
@@ -11,43 +11,96 @@
     </div>
 </div>
 
+<!-- Key Metrics -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-dark text-white">
+            <span class="small opacity-50 text-uppercase" style="letter-spacing: 0.1em;">Total Revenue</span>
+            <h2 class="mb-0 mt-1">$<%= (analytics.summary.totalRevenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Total Bookings</span>
+            <h2 class="mb-0 mt-1"><%= analytics.summary.totalBookings %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Avg. Stay Value</span>
+            <h2 class="mb-0 mt-1">$<%= analytics.summary.avgStayValue.toFixed(2) %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Occupancy Rate</span>
+            <h2 class="mb-0 mt-1"><%= analytics.summary.avgOccupancy %>%</h2>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4 mb-5">
     <!-- Revenue Distribution -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm p-4 h-100">
-            <h6 class="font-serif mb-4 text-muted uppercase small tracking-widest">Revenue by Room Type</h6>
-            <div class="space-y-4">
+            <h6 class="font-serif mb-4 text-muted small text-uppercase" style="letter-spacing: 0.1em;">Revenue by Room Type</h6>
+            <% if (analytics.revenueByType.length > 0) { %>
+                <% const maxRevenue = analytics.revenueByType.reduce((a,b) => a + (b.total || 0), 0); %>
                 <% analytics.revenueByType.forEach(item => { %>
                 <div class="mb-4">
                     <div class="d-flex justify-content-between mb-1">
                         <span class="small fw-bold"><%= item.name %></span>
-                        <span class="small fw-serif">$<%= (item.total || 0).toLocaleString() %></span>
+                        <span class="small">$<%= (item.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                     </div>
                     <div class="progress" style="height: 6px;">
-                        <% let percent = (item.total / analytics.revenueByType.reduce((a,b) => a + (b.total || 0), 0)) * 100 %>
+                        <% let percent = maxRevenue > 0 ? (item.total / maxRevenue) * 100 : 0; %>
                         <div class="progress-bar bg-dark" style="width: <%= percent %>%"></div>
                     </div>
                 </div>
                 <% }) %>
+            <% } else { %>
+                <p class="text-muted text-center py-4">No revenue data available</p>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Booking Sources & Payment Methods -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="font-serif mb-4 text-muted small text-uppercase" style="letter-spacing: 0.1em;">Revenue by Payment Method</h6>
+            <div class="row text-center mt-3">
+                <% if (analytics.paymentMethods.length > 0) { %>
+                    <% analytics.paymentMethods.forEach(method => { %>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light">
+                            <h4 class="mb-0 fw-bold">$<%= (method.total || 0).toLocaleString() %></h4>
+                            <small class="text-muted text-uppercase"><%= method.payment_method %></small>
+                        </div>
+                    </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-12"><p class="text-muted py-4">No payment data recorded</p></div>
+                <% } %>
             </div>
         </div>
     </div>
 
-    <!-- Booking Sources -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm p-4 h-100">
-            <h6 class="font-serif mb-4 text-muted uppercase small tracking-widest">Channel Performance</h6>
+            <h6 class="font-serif mb-4 text-muted small text-uppercase" style="letter-spacing: 0.1em;">Channel Performance</h6>
             <div class="row text-center mt-3">
                 <% analytics.sources.forEach(source => { %>
-                <div class="col-6">
+                <div class="col-6 mb-3">
                     <div class="p-3 bg-light">
                         <h2 class="font-serif mb-0"><%= source.count %></h2>
-                        <small class="text-muted uppercase tracking-tighter"><%= source.source %></small>
+                        <small class="text-muted text-uppercase"><%= source.source %></small>
                     </div>
                 </div>
                 <% }) %>
+                <% if (analytics.sources.length === 0) { %>
+                <div class="col-12"><p class="text-muted py-4">No booking data yet</p></div>
+                <% } %>
             </div>
-            <p class="text-[10px] text-center mt-4 text-muted">Online vs. Walk-in distribution for current period.</p>
         </div>
     </div>
 </div>
@@ -56,15 +109,15 @@
     <!-- Monthly Trend -->
     <div class="col-lg-12">
         <div class="card border-0 shadow-sm p-4">
-            <h6 class="font-serif mb-4 text-muted uppercase small tracking-widest">Monthly Growth Trend (Last 6 Months)</h6>
+            <h6 class="font-serif mb-4 text-muted small text-uppercase" style="letter-spacing: 0.1em;">Monthly Growth Trend (Last 6 Months)</h6>
             <div class="table-responsive">
                 <table class="table table-borderless align-middle">
                     <thead>
-                        <tr class="text-muted small uppercase">
+                        <tr class="text-muted small text-uppercase">
                             <th>Month Period</th>
                             <th>Total Bookings</th>
                             <th>Monthly Revenue</th>
-                            <th class="text-end">Growth Indicator</th>
+                            <th class="text-end">Growth</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,12 +125,25 @@
                         <tr class="border-bottom">
                             <td class="fw-bold"><%= month.month %></td>
                             <td><%= month.count %> Reservations</td>
-                            <td class="fw-serif text-success">$<%= (month.revenue || 0).toLocaleString() %></td>
+                            <td class="fw-bold text-success">$<%= (month.revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
                             <td class="text-end">
-                                <span class="text-success small">▲ Healthy</span>
+                                <% if (month.growth !== null && month.growth !== undefined) { %>
+                                    <% if (parseFloat(month.growth) > 0) { %>
+                                        <span class="text-success small fw-bold">+<%= month.growth %>%</span>
+                                    <% } else if (parseFloat(month.growth) < 0) { %>
+                                        <span class="text-danger small fw-bold"><%= month.growth %>%</span>
+                                    <% } else { %>
+                                        <span class="text-muted small">0%</span>
+                                    <% } %>
+                                <% } else { %>
+                                    <span class="text-muted small">--</span>
+                                <% } %>
                             </td>
                         </tr>
                         <% }) %>
+                        <% if (analytics.monthlyTrend.length === 0) { %>
+                        <tr><td colspan="4" class="text-center py-4 text-muted">No monthly data available</td></tr>
+                        <% } %>
                     </tbody>
                 </table>
             </div>
@@ -89,22 +155,42 @@
     <!-- Room Status Breakdown -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm p-4 text-center">
-            <h6 class="font-serif mb-4 text-muted uppercase small tracking-widest">Inventory Status</h6>
-            <div class="d-flex justify-content-center gap-3">
+            <h6 class="font-serif mb-4 text-muted small text-uppercase" style="letter-spacing: 0.1em;">Inventory Status</h6>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
                 <% analytics.roomStatus.forEach(status => { %>
-                <div>
+                <div class="p-2">
                     <h3 class="mb-0"><%= status.count %></h3>
-                    <small class="text-muted text-[10px] uppercase"><%= status.status %></small>
+                    <small class="text-muted text-uppercase" style="font-size: 0.65rem;"><%= status.status %></small>
                 </div>
                 <% }) %>
             </div>
+            <div class="mt-3 text-muted small">Total: <%= analytics.totalRooms %> rooms</div>
         </div>
     </div>
     
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm p-4 bg-primary text-white">
+        <div class="card border-0 shadow-sm p-4 bg-dark text-white">
             <h6 class="font-serif mb-2">Executive Summary</h6>
-            <p class="small opacity-75">The hotel is maintaining a stable occupancy rate. Revenue is primarily driven by Premium Residences. Digital booking requests have seen a 15% increase month-over-month.</p>
+            <p class="small opacity-75 mb-2">
+                The hotel currently maintains a <strong><%= analytics.summary.avgOccupancy %>%</strong> occupancy rate 
+                across <strong><%= analytics.totalRooms %></strong> active rooms.
+                Total revenue stands at <strong>$<%= analytics.summary.totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></strong> 
+                from <strong><%= analytics.summary.totalBookings %></strong> confirmed bookings.
+                <% if (analytics.summary.avgStayValue > 0) { %>
+                    Average booking value is <strong>$<%= analytics.summary.avgStayValue.toFixed(2) %></strong>.
+                <% } %>
+            </p>
+            <% if (analytics.monthlyTrend.length >= 2 && analytics.monthlyTrend[0].growth) { %>
+                <p class="small opacity-75 mb-0">
+                    <% if (parseFloat(analytics.monthlyTrend[0].growth) > 0) { %>
+                        Revenue grew <strong><%= analytics.monthlyTrend[0].growth %>%</strong> compared to the previous month.
+                    <% } else if (parseFloat(analytics.monthlyTrend[0].growth) < 0) { %>
+                        Revenue decreased <strong><%= Math.abs(analytics.monthlyTrend[0].growth) %>%</strong> compared to the previous month.
+                    <% } else { %>
+                        Revenue remained flat compared to the previous month.
+                    <% } %>
+                </p>
+            <% } %>
         </div>
     </div>
 </div>

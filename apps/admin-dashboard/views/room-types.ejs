@@ -8,29 +8,40 @@
 <div class="row g-4">
     <% types.forEach(type => { %>
     <div class="col-md-4">
-        <div class="card p-4 border-0 shadow-sm <%= type.is_active ? '' : 'opacity-50 grayscale' %>">
+        <div class="card p-4 border-0 shadow-sm h-100 <%= type.is_active ? '' : 'opacity-50' %>">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h5 class="fw-bold mb-0"><%= type.name %></h5>
                 <span class="badge <%= type.is_active ? 'bg-success' : 'bg-secondary' %>"><%= type.is_active ? 'Active' : 'Disabled' %></span>
             </div>
-            <p class="text-muted small mb-4 h-[50px] overflow-hidden"><%= type.description %></p>
+            <p class="text-muted small mb-4" style="min-height: 40px;"><%= type.description || 'No description' %></p>
             <div class="d-flex justify-content-between align-items-center">
-                <span class="fs-4 fw-serif text-primary">$<%= type.base_price %></span>
-                <button class="btn btn-sm btn-outline-dark" onclick="editType('<%= JSON.stringify(type) %>')">Modify</button>
+                <span class="fs-4 fw-bold text-primary">$<%= type.base_price %></span>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-dark" onclick="editType('<%- JSON.stringify(type).replace(/'/g, "\\'") %>')">Edit</button>
+                    <form action="/room-types/<%= type.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this room type?')">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
     <% }) %>
+    <% if (types.length === 0) { %>
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-5 text-center text-muted">No room types defined yet.</div>
+    </div>
+    <% } %>
 </div>
 
 <!-- Modal -->
 <div class="modal fade" id="typeModal" tabindex="-1">
     <div class="modal-dialog">
-        <form action="/room-types" method="POST" class="modal-content">
-            <div class="modal-header border-0 pb-0">
+        <form action="/room-types" method="POST" class="modal-content border-0 rounded-0">
+            <div class="modal-header bg-dark text-white border-0">
                 <h5 class="modal-title fw-bold">Room Type Configuration</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <input type="hidden" name="id" id="type_id">
                 <div class="mb-3">
                     <label class="form-label small fw-bold">TYPE NAME</label>
@@ -42,15 +53,15 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold">BASE PRICE ($)</label>
-                    <input type="number" name="base_price" id="type_price" class="form-control" required>
+                    <input type="number" name="base_price" id="type_price" class="form-control" step="0.01" required>
                 </div>
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_active" id="type_active" checked>
                     <label class="form-check-label small fw-bold">ACTIVE ON WEBSITE</label>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="submit" class="btn btn-primary w-100">COMMIT CHANGES</button>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100">SAVE CHANGES</button>
             </div>
         </form>
     </div>

@@ -12,42 +12,79 @@
             --primary-accent: #3b82f6;
         }
         body { background-color: var(--bg-color); font-family: 'Inter', sans-serif; }
-        .sidebar { height: 100vh; background-color: var(--sidebar-color); color: white; padding-top: 2rem; position: fixed; width: 250px; }
-        .sidebar a { color: #a1a1aa; text-decoration: none; padding: 0.75rem 1.5rem; display: block; }
+        .sidebar { height: 100vh; background-color: var(--sidebar-color); color: white; padding-top: 2rem; position: fixed; width: 250px; overflow-y: auto; }
+        .sidebar a { color: #a1a1aa; text-decoration: none; padding: 0.75rem 1.5rem; display: block; font-size: 0.875rem; }
         .sidebar a:hover, .sidebar a.active { color: white; background-color: #27272a; }
+        .sidebar .nav-section { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.15em; color: #52525b; padding: 1.25rem 1.5rem 0.5rem; }
         .main-content { margin-left: 250px; padding: 2rem; }
         .card { border: none; border-radius: 0; border-bottom: 2px solid #e4e4e7; }
         .btn-primary { border-radius: 0; background-color: var(--primary-accent); border: none; }
         table { background: white; border: 1px solid #e4e4e7; }
         .status-badge { font-size: 0.75rem; text-transform: uppercase; font-weight: bold; padding: 0.25rem 0.5rem; }
+        .alert-bar { position: fixed; top: 0; left: 250px; right: 0; z-index: 1050; }
+        .pagination .page-link { border-radius: 0; color: #18181b; }
+        .pagination .page-item.active .page-link { background-color: #18181b; border-color: #18181b; }
+        .search-bar { max-width: 300px; }
     </style>
 </head>
-<body data-session-user='<%- user ? JSON.stringify(user) : "{}" %>'>
-    <script>
-        (function() {
-            const userData = document.body.getAttribute('data-session-user');
-            if (userData && userData !== "{}") {
-                localStorage.setItem('elysian_session', userData);
-            } else {
-                localStorage.removeItem('elysian_session');
-            }
-        })();
-    </script>
+<body>
     <div class="sidebar">
         <h4 class="px-4 mb-2">ELYSIAN</h4>
         <% if (locals.user) { %>
             <p class="px-4 text-muted small mb-4">User: <%= user.name %> (<%= user.role %>)</p>
         <% } %>
+        
+        <div class="nav-section">Operations</div>
         <a href="/" class="<%= (locals.page === 'overview') ? 'active' : '' %>">Overview</a>
         <a href="/bookings" class="<%= (locals.page === 'walk-in') ? 'active' : '' %>">Bookings</a>
         <a href="/requests" class="<%= (locals.page === 'requests') ? 'active' : '' %>">Online Requests</a>
-        <a href="/room-types" class="<%= (locals.page === 'room-types') ? 'active' : '' %>">Inventory</a>
+        <a href="/housekeeping" class="<%= (locals.page === 'housekeeping') ? 'active' : '' %>">Housekeeping</a>
+        <a href="/guests" class="<%= (locals.page === 'guests') ? 'active' : '' %>">Guests (CRM)</a>
+        
+        <div class="nav-section">Inventory</div>
+        <a href="/room-types" class="<%= (locals.page === 'room-types') ? 'active' : '' %>">Room Types</a>
+        <a href="/rooms" class="<%= (locals.page === 'rooms') ? 'active' : '' %>">Rooms</a>
+        
+        <div class="nav-section">Services</div>
+        <a href="/pos" class="<%= (locals.page === 'pos') ? 'active' : '' %>">Point of Sale (POS)</a>
         <a href="/restaurant-admin" class="<%= (locals.page === 'restaurant') ? 'active' : '' %>">Restaurant Menu</a>
+        <a href="/payments" class="<%= (locals.page === 'payments') ? 'active' : '' %>">Payments</a>
+        
+        <div class="nav-section">Intelligence</div>
         <a href="/reports" class="<%= (locals.page === 'reports') ? 'active' : '' %>">Reports & Analytics</a>
+        
         <% if (locals.user && user.role === 'admin') { %>
+            <div class="nav-section">Administration</div>
             <a href="/staff" class="<%= (locals.page === 'staff') ? 'active' : '' %>">Staff Management</a>
+            <a href="/audit" class="<%= (locals.page === 'audit') ? 'active' : '' %>">Audit Trail</a>
         <% } %>
-        <a href="/reports/excel" class="text-info mt-4">Download Excel</a>
-        <a href="/logout" class="text-danger mt-2">Logout</a>
+        
+        <div class="nav-section mt-4">System</div>
+        <a href="/reports/excel" class="text-info">Export Data (XLSX)</a>
+        <a href="/logout" class="text-danger">Logout</a>
     </div>
     <div class="main-content">
+        <!-- Toast Container -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+            <div id="bookingToast" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-dark text-white border-0">
+                    <strong class="me-auto">New Online Request</strong>
+                    <small>Just now</small>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body bg-white p-3">
+                    <p class="mb-2 small"><strong id="toastGuest"></strong> has requested a <span id="toastRoom"></span>.</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-success" id="toastTotal"></span>
+                        <a href="/requests" class="btn btn-xs btn-dark py-1 px-2 small" style="font-size: 0.7rem;">VIEW REQUESTS</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <% if (locals.error) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>

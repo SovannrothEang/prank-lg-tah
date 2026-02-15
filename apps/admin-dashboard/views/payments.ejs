@@ -1,8 +1,197 @@
 <%- include('partials/header') %>
-<div class="mb-4">
-    <h2>Financial Records</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="font-serif mb-1">Financial Records</h2>
+        <span class="text-muted small">Payment tracking & reconciliation</span>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPaymentModal">+ Record Payment</button>
 </div>
-<div class="card p-5 text-center">
-    <p class="text-muted">Payment history and reconciliation reports.</p>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-dark text-white">
+            <span class="small opacity-50 text-uppercase" style="letter-spacing: 0.1em;">Total Collected</span>
+            <h2 class="mb-0 mt-1">$<%= stats.totalCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Today</span>
+            <h2 class="mb-0 mt-1 text-success">$<%= stats.todayCollected.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Outstanding</span>
+            <h2 class="mb-0 mt-1 text-warning">$<%= stats.outstandingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <span class="small text-muted text-uppercase" style="letter-spacing: 0.1em;">Cash Ratio</span>
+            <% 
+                const cash = stats.byMethod?.find(m => m.payment_method === 'cash')?.total || 0;
+                const total = stats.totalCollected || 1;
+                const ratio = Math.round((cash / total) * 100);
+            %>
+            <h2 class="mb-0 mt-1"><%= ratio %>%</h2>
+        </div>
+    </div>
 </div>
+
+<div class="row g-4">
+    <!-- Outstanding Balances -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="bg-dark text-white p-3">
+                <h6 class="mb-0 text-uppercase small fw-bold" style="letter-spacing: 0.1em;">Outstanding Balances</h6>
+            </div>
+            <div style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light small text-muted">
+                        <tr>
+                            <th class="ps-3">Guest</th>
+                            <th>Room</th>
+                            <th>Balance</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% unpaidBookings.forEach(b => { %>
+                        <tr>
+                            <td class="ps-3">
+                                <div class="fw-bold small"><%= b.guest_name %></div>
+                                <div class="text-muted" style="font-size: 0.7rem;"><%= b.phone_number %></div>
+                            </td>
+                            <td class="small"><%= b.room_number %></td>
+                            <td>
+                                <div class="fw-bold text-danger">$<%= b.balance.toFixed(2) %></div>
+                                <div class="text-muted" style="font-size: 0.7rem;">of $<%= b.total_price.toFixed(2) %></div>
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-success" onclick="quickPay(<%= b.id %>, '<%= b.guest_name.replace(/'/g, "\\'") %>', <%= b.balance %>)">Pay</button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                        <% if (unpaidBookings.length === 0) { %>
+                        <tr><td colspan="4" class="text-center py-4 text-muted small">All accounts settled</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-uppercase small fw-bold" style="letter-spacing: 0.1em;">Payment History</h6>
+                <form method="GET" action="/payments" class="d-flex gap-2">
+                    <input type="text" name="search" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Search..." value="<%= search %>" style="max-width: 180px;">
+                </form>
+            </div>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light small text-muted">
+                    <tr>
+                        <th class="ps-3">Date</th>
+                        <th>Guest</th>
+                        <th>Room</th>
+                        <th>Method</th>
+                        <th class="text-end pe-3">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% payments.forEach(p => { %>
+                    <tr>
+                        <td class="ps-3 small"><%= new Date(p.created_at).toLocaleDateString() %></td>
+                        <td class="fw-bold small"><%= p.guest_name %></td>
+                        <td class="small"><%= p.room_number %></td>
+                        <td>
+                            <span class="badge bg-secondary status-badge"><%= p.payment_method %></span>
+                        </td>
+                        <td class="text-end pe-3 fw-bold text-success">$<%= p.amount.toFixed(2) %></td>
+                    </tr>
+                    <% }) %>
+                    <% if (payments.length === 0) { %>
+                    <tr><td colspan="5" class="text-center py-4 text-muted small">No payments recorded yet</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.total > 1) { %>
+        <nav class="mt-3 d-flex justify-content-center">
+            <ul class="pagination pagination-sm">
+                <% if (pagination.current > 1) { %>
+                    <li class="page-item"><a class="page-link" href="?page=<%= pagination.current - 1 %>&search=<%= search %>">Prev</a></li>
+                <% } %>
+                <% for (let i = 1; i <= pagination.total; i++) { %>
+                    <li class="page-item <%= pagination.current === i ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+                    </li>
+                <% } %>
+                <% if (pagination.current < pagination.total) { %>
+                    <li class="page-item"><a class="page-link" href="?page=<%= pagination.current + 1 %>&search=<%= search %>">Next</a></li>
+                <% } %>
+            </ul>
+        </nav>
+        <% } %>
+    </div>
+</div>
+
+<!-- New Payment Modal -->
+<div class="modal fade" id="newPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/payments" method="POST" class="modal-content border-0 rounded-0">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title">Record Payment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">BOOKING</label>
+                    <select name="booking_id" id="pay_booking_id" class="form-select" required>
+                        <option value="">Select booking</option>
+                        <% unpaidBookings.forEach(b => { %>
+                            <option value="<%= b.id %>"><%= b.guest_name %> - Room <%= b.room_number %> (Balance: $<%= b.balance.toFixed(2) %>)</option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">AMOUNT ($)</label>
+                    <input type="number" name="amount" id="pay_amount" class="form-control" step="0.01" min="0.01" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">METHOD</label>
+                    <select name="payment_method" class="form-select" required>
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">NOTES</label>
+                    <input type="text" name="notes" class="form-control" maxlength="300">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-success w-100 py-2">RECORD PAYMENT</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function quickPay(bookingId, guestName, balance) {
+    document.getElementById('pay_booking_id').value = bookingId;
+    document.getElementById('pay_amount').value = balance.toFixed(2);
+    new bootstrap.Modal(document.getElementById('newPaymentModal')).show();
+}
+</script>
+
 <%- include('partials/footer') %>

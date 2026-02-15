@@ -1,8 +1,24 @@
 <%- include('partials/header'); %>
 
-<div class="mb-5">
-    <h2 class="font-serif">Online Guest Requests</h2>
-    <p class="text-muted small uppercase tracking-widest">Digital Verification Required</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="font-serif mb-1">Online Guest Requests</h2>
+        <span class="text-muted small"><%= pagination.totalRecords %> total requests</span>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card border-0 shadow-sm p-3 mb-4">
+    <form method="GET" action="/requests" class="d-flex gap-3 align-items-end">
+        <div class="search-bar flex-grow-1">
+            <label class="form-label small fw-bold mb-1">SEARCH</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Guest name, phone, telegram..." value="<%= search %>">
+        </div>
+        <button type="submit" class="btn btn-dark btn-sm px-4">Search</button>
+        <% if (search) { %>
+            <a href="/requests" class="btn btn-outline-secondary btn-sm">Clear</a>
+        <% } %>
+    </form>
 </div>
 
 <div class="card overflow-hidden border-0 shadow-sm">
@@ -12,6 +28,7 @@
                 <th class="ps-4 py-3">Guest Contact</th>
                 <th class="py-3">Residency</th>
                 <th class="py-3">Stay Data</th>
+                <th class="py-3">Total</th>
                 <th class="py-3 text-end pe-4">Decisions</th>
             </tr>
         </thead>
@@ -20,91 +37,63 @@
             <tr>
                 <td class="ps-4">
                     <div class="fw-bold"><%= request.guest_name %></div>
-                    <div class="text-[10px] text-primary">TELEGRAM: <%= request.telegram || 'N/A' %></div>
+                    <div class="text-primary small">TG: <%= request.telegram || 'N/A' %></div>
                     <% if (request.phone_number) { %>
-                        <div class="text-[10px] text-muted">TEL: <%= request.phone_number %></div>
+                        <div class="text-muted small">TEL: <%= request.phone_number %></div>
+                    <% } %>
+                    <% if (request.special_requests) { %>
+                        <div class="text-muted small mt-1" title="<%= request.special_requests %>">Note: <%= request.special_requests.substring(0, 40) %><%= request.special_requests.length > 40 ? '...' : '' %></div>
                     <% } %>
                 </td>
                 <td>
                     <div class="small fw-bold"><%= request.type_name || 'Standard' %></div>
-                    <div class="text-[10px] text-muted">BASE: $<%= (request.base_price || 0).toFixed(2) %>/NIGHT</div>
+                    <div class="text-muted small">$<%= (request.base_price || 0).toFixed(2) %>/night</div>
+                    <div class="text-muted small">Room: <%= request.room_number || 'N/A' %></div>
                 </td>
                 <td>
-                    <div class="small"><%= request.check_in_date %> <span class="text-muted">→</span> <%= request.check_out_date %></div>
+                    <div class="small"><%= request.check_in_date %> <span class="text-muted">&rarr;</span> <%= request.check_out_date %></div>
                 </td>
+                <td class="fw-bold">$<%= (request.total_price || 0).toFixed(2) %></td>
                 <td class="text-end pe-4">
                     <% if (request.status === 'pending') { %>
-                        <button class="btn btn-sm btn-dark px-4" onclick="previewRequest('<%= JSON.stringify(request).replace(/'/g, "\\'") %>')">Review & Sync</button>
+                        <div class="d-flex gap-1 justify-content-end">
+                            <form action="/requests/<%= request.id %>/approve" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-dark px-3">Approve</button>
+                            </form>
+                            <form action="/requests/<%= request.id %>/reject" method="POST" class="d-inline" onsubmit="return confirm('Reject this request?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger px-3">Reject</button>
+                            </form>
+                        </div>
                     <% } else { %>
-                        <span class="badge status-badge <%= request.status === 'approved' ? 'bg-success' : 'bg-danger' %>"><%= request.status %></span>
+                        <span class="badge status-badge <%= request.status === 'approved' ? 'bg-success' : (request.status === 'rejected' ? 'bg-danger' : 'bg-secondary') %>"><%= request.status %></span>
                     <% } %>
                 </td>
             </tr>
             <% }) %>
+            <% if (requests.length === 0) { %>
+            <tr><td colspan="5" class="text-center py-5 text-muted">No requests found</td></tr>
+            <% } %>
         </tbody>
     </table>
 </div>
 
-<!-- Review Modal -->
-<div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-0">
-            <div class="modal-header bg-dark text-white border-0 py-4">
-                <div class="text-center w-100">
-                    <h5 class="modal-title font-serif tracking-widest uppercase">Invoice Verification</h5>
-                </div>
-            </div>
-            <div class="modal-body p-5">
-                <div id="modal-content-area">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="small text-dark fw-medium">Residence Duration</span>
-                        <span id="p_nights" class="small fw-bold">--</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-4">
-                        <span class="small text-dark fw-medium">Base Nightly Rate</span>
-                        <span id="p_rate" class="small fw-bold">--</span>
-                    </div>
-                    <div class="bg-light p-4 rounded-0 mb-0 border-start border-4 border-dark">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-[10px] uppercase tracking-widest fw-bold">Total Stay Value</span>
-                            <h3 class="font-serif mb-0 text-success" id="p_total">--</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-0 flex-column">
-                <form id="approveForm" method="POST" class="w-100">
-                    <button type="submit" class="btn btn-dark w-100 rounded-0 py-3 uppercase tracking-[0.2em] text-[11px] fw-bold">Execute Approval</button>
-                </form>
-                <button type="button" id="rejectBtn" class="btn btn-link w-100 text-danger text-decoration-none py-3 text-[11px] uppercase tracking-widest fw-bold">Decline Request</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function previewRequest(dataStr) {
-    const r = JSON.parse(dataStr);
-    const start = new Date(r.check_in_date);
-    const end = new Date(r.check_out_date);
-    const nights = Math.max(Math.ceil((end - start) / (1000 * 60 * 60 * 24)), 1);
-    
-    document.getElementById('p_nights').innerText = nights + ' Night(s)';
-    document.getElementById('p_rate').innerText = '$' + (r.base_price || 0).toFixed(2);
-    document.getElementById('p_total').innerText = '$' + (nights * (r.base_price || 0)).toLocaleString(undefined, {minimumFractionDigits: 2});
-    
-    document.getElementById('approveForm').action = '/requests/' + r.id + '/approve';
-    
-    document.getElementById('rejectBtn').onclick = () => {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/requests/' + r.id + '/reject';
-        document.body.appendChild(form);
-        form.submit();
-    };
-
-    new bootstrap.Modal(document.getElementById('previewModal')).show();
-}
-</script>
+<!-- Pagination -->
+<% if (pagination.total > 1) { %>
+<nav class="mt-4 d-flex justify-content-center">
+    <ul class="pagination pagination-sm">
+        <% if (pagination.current > 1) { %>
+            <li class="page-item"><a class="page-link" href="?page=<%= pagination.current - 1 %>&search=<%= search %>">Prev</a></li>
+        <% } %>
+        <% for (let i = 1; i <= pagination.total; i++) { %>
+            <li class="page-item <%= pagination.current === i ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+            </li>
+        <% } %>
+        <% if (pagination.current < pagination.total) { %>
+            <li class="page-item"><a class="page-link" href="?page=<%= pagination.current + 1 %>&search=<%= search %>">Next</a></li>
+        <% } %>
+    </ul>
+</nav>
+<% } %>
 
 <%- include('partials/footer'); %>

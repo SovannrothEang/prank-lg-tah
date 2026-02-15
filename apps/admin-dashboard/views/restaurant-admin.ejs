@@ -3,7 +3,7 @@
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
         <h2 class="font-serif mb-1">Culinary Management</h2>
-        <p class="text-muted small uppercase tracking-widest">Digital Menu Curator</p>
+        <p class="text-muted small mb-0">Digital Menu Curator</p>
     </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal">+ New Menu Entry</button>
 </div>
@@ -11,7 +11,7 @@
 <div class="row">
     <% ['food', 'deserts', 'wine'].forEach(cat => { %>
     <div class="col-12 mb-5">
-        <h6 class="text-uppercase tracking-widest text-primary border-bottom pb-2 mb-3"><%= cat %></h6>
+        <h6 class="text-uppercase text-primary border-bottom pb-2 mb-3" style="letter-spacing: 0.1em;"><%= cat === 'deserts' ? 'Desserts' : cat.charAt(0).toUpperCase() + cat.slice(1) %></h6>
         <div class="card border-0 shadow-sm overflow-hidden">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted small">
@@ -27,19 +27,27 @@
                     <tr class="<%= item.is_available ? '' : 'bg-light text-muted opacity-75' %>">
                         <td class="ps-4">
                             <div class="fw-bold"><%= item.name %></div>
-                            <div class="text-[10px]"><%= item.description %></div>
+                            <div class="small text-muted"><%= item.description %></div>
                         </td>
-                        <td class="fw-serif">$<%= item.price %></td>
+                        <td class="fw-bold">$<%= item.price.toFixed(2) %></td>
                         <td>
                             <span class="badge <%= item.is_available ? 'bg-success' : 'bg-secondary' %> status-badge">
                                 <%= item.is_available ? 'Live' : 'Hidden' %>
                             </span>
                         </td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-dark" onclick="editItem('<%= JSON.stringify(item) %>')">Edit</button>
+                            <div class="d-flex gap-1 justify-content-end">
+                                <button class="btn btn-sm btn-outline-dark" onclick="editItem('<%- JSON.stringify(item).replace(/'/g, "\\'") %>')">Edit</button>
+                                <form action="/restaurant-admin/<%= item.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this item?')">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     <% }) %>
+                    <% if (menu.filter(i => i.category === cat).length === 0) { %>
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No items in this category</td></tr>
+                    <% } %>
                 </tbody>
             </table>
         </div>
@@ -50,11 +58,12 @@
 <!-- Modal -->
 <div class="modal fade" id="itemModal" tabindex="-1">
     <div class="modal-dialog">
-        <form action="/restaurant-admin" method="POST" class="modal-content">
-            <div class="modal-header border-0 pb-0">
+        <form action="/restaurant-admin" method="POST" class="modal-content border-0 rounded-0">
+            <div class="modal-header bg-dark text-white border-0">
                 <h5 class="modal-title fw-bold">Menu Item Configuration</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <input type="hidden" name="id" id="item_id">
                 <div class="mb-3">
                     <label class="form-label small fw-bold">CATEGORY</label>
@@ -81,8 +90,8 @@
                     <label class="form-check-label small fw-bold">AVAILABLE ON SITE</label>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="submit" class="btn btn-primary w-100">UPDATE MENU</button>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-primary w-100">SAVE CHANGES</button>
             </div>
         </form>
     </div>

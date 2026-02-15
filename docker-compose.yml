@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  elysian-hotel:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=${SESSION_SECRET}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_STAFF_CHAT_ID=${TELEGRAM_STAFF_CHAT_ID}
+    volumes:
+      - elysian-data:/usr/src/app/apps/admin-dashboard/db
+      - elysian-uploads:/usr/src/app/apps/admin-dashboard/uploads
+
+volumes:
+  elysian-data:
+  elysian-uploads:
