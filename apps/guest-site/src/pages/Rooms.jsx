@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { getAvailableRooms } from '../services/api';
 import { Link } from 'react-router-dom';
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { scrollY } = useScroll();
+  const titleY = useTransform(scrollY, [0, 400], [0, 100]);
 
   useEffect(() => {
     getAvailableRooms().then(data => {
@@ -15,67 +17,105 @@ const Rooms = () => {
   }, []);
 
   if (loading) return (
-    <div className="h-screen bg-zinc-950 flex items-center justify-center font-serif text-amber-200/50 text-xl tracking-widest animate-pulse">
-      Curating the Collection
+    <div className="h-screen bg-[#080808] flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="text-[10px] tracking-[1em] uppercase text-stone-600 animate-pulse">Elysian</div>
+        <div className="h-px w-20 bg-stone-800 mx-auto" />
+      </div>
     </div>
   );
 
   return (
-    <div className="bg-zinc-950 min-h-screen pt-40 pb-20 px-6">
+    <div className="bg-[#080808] min-h-screen pb-40">
       <div className="grain" />
       
-      <div className="max-w-7xl mx-auto mb-32">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl"
-        >
-          <span className="text-amber-200/60 tracking-[0.4em] uppercase text-[10px] block mb-4">Residential Collection</span>
-          <h1 className="text-5xl md:text-8xl mb-8 leading-tight">Masterfully <br/><span className="italic font-light">Crafted</span> Spaces</h1>
-        </motion.div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-24">
-        {rooms.map((room, i) => (
+      {/* Header Space */}
+      <section className="relative pt-60 pb-32 px-8 lg:px-24">
+        <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-end">
           <motion.div 
-            key={room.id}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.8 }}
-            className="group"
+            style={{ y: titleY }}
+            className="lg:col-span-8"
           >
-            <div className="relative overflow-hidden aspect-[3/4] mb-8">
-              <img 
-                src={`https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop`} 
-                alt={room.type_name}
-                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-700" />
-              <div className="absolute inset-0 p-10 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-700">
-                <Link 
-                  to="/booking" 
-                  state={{ roomUuid: room.uuid, roomType: room.type_name, price: room.base_price }}
-                  className="luxury-button border-white/40 text-white hover:border-white text-center"
-                >
-                  Reserve Now
-                </Link>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-start border-b border-stone-800 pb-6">
-              <div>
-                <h3 className="text-2xl font-serif mb-2">{room.type_name}</h3>
-                <p className="text-stone-500 text-[10px] uppercase tracking-widest">Available Residence</p>
-              </div>
-              <div className="text-right">
-                <span className="text-amber-200 text-xl font-serif block">${room.base_price}</span>
-                <span className="text-[10px] text-stone-500 uppercase tracking-widest">per night</span>
-              </div>
-            </div>
+            <span className="text-stone-500 tracking-[0.5em] uppercase text-[10px] block mb-8 font-bold">Residential Portfolio</span>
+            <h1 className="text-7xl md:text-[10rem] leading-[0.85] font-serif tracking-tighter">
+              Private <br/> <span className="italic font-light text-stone-400">Sanctuaries.</span>
+            </h1>
           </motion.div>
-        ))}
-      </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 1.5 }}
+            className="lg:col-span-4 border-l border-stone-800 ps-10 pb-4"
+          >
+             <p className="text-stone-500 text-sm leading-relaxed max-w-xs">
+              A curated collection of residences designed for the modern aesthete. 
+              Meticulous craftsmanship meets unprecedented comfort.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Grid Layout */}
+      <section className="px-8 lg:px-24">
+        <div className="max-w-[1800px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-32">
+          {rooms.map((room, i) => (
+            <motion.div 
+              key={room.uuid}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1.2, ease: [0.19, 1, 0.22, 1] }}
+              className={`group flex flex-col ${i % 2 !== 0 ? 'md:mt-32' : ''}`}
+            >
+              <div className="relative overflow-hidden aspect-[4/5] mb-12 bg-zinc-900">
+                <img 
+                  src={`https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=2070&auto=format&fit=crop`} 
+                  alt={room.type_name}
+                  className="w-full h-full object-cover transition-transform duration-[2.5s] ease-out group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0"
+                />
+                <div className="absolute inset-0 bg-[#080808]/10 group-hover:bg-transparent transition-all duration-1000" />
+                
+                {/* Hover UI */}
+                <div className="absolute inset-0 p-12 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-1000">
+                  <div className="flex justify-end">
+                    <span className="text-[9px] tracking-[0.4em] uppercase text-white bg-white/10 backdrop-blur-md px-4 py-2">Available Now</span>
+                  </div>
+                  <Link 
+                    to="/booking" 
+                    state={{ roomUuid: room.uuid, roomType: room.type_name, price: room.base_price }}
+                    className="luxury-button !bg-white !text-black !border-white text-center translate-y-10 group-hover:translate-y-0 transition-transform duration-700"
+                  >
+                    Initiate Reservation
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex justify-between items-end">
+                  <h3 className="text-4xl md:text-5xl font-serif">{room.type_name}</h3>
+                  <div className="text-right">
+                    <span className="text-stone-500 text-[9px] uppercase tracking-[0.4em] block mb-1">Nightly Rate</span>
+                    <span className="text-2xl font-serif text-stone-200">${room.base_price.toLocaleString()}</span>
+                  </div>
+                </div>
+                
+                <div className="h-px bg-stone-800 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-1000" />
+                
+                <div className="flex justify-between text-stone-500 text-[10px] uppercase tracking-[0.4em] pt-2">
+                  <span>Panoramic View</span>
+                  <span>Personal Butler</span>
+                  <span>Vault Access</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer Info */}
+      <section className="py-60 px-8 text-center border-t border-stone-900 mt-40">
+        <p className="text-stone-600 text-[10px] uppercase tracking-[1em]">End of Collection</p>
+      </section>
     </div>
   );
 };

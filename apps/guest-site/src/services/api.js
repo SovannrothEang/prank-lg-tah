@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:3000/api';
 
 export const getAvailableRooms = async () => {
     const response = await axios.get(`${API_URL}/rooms/available`);
-    return response.data;
+    return response.data.data;
 };
 
 export const createBookingRequest = async (bookingData) => {

@@ -3,6 +3,7 @@
 @theme {
   --color-gold: #D4AF37;
   --color-luxury: #1C1C1C;
+  --color-accent: #E5E5E1;
   
   --font-serif: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
@@ -12,11 +13,11 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0a0a] text-stone-200 antialiased selection:bg-amber-200/30;
+    @apply bg-[#080808] text-stone-300 antialiased selection:bg-amber-200/30;
     font-feature-settings: "ss01", "ss02", "cv01";
   }
   h1, h2, h3, h4 {
-    @apply font-serif tracking-tight text-stone-50;
+    @apply font-serif tracking-[-0.03em] text-stone-50;
   }
 }
 
@@ -28,23 +29,46 @@
     width: 300%;
     height: 300%;
     background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-    opacity: 0.04;
+    opacity: 0.05;
     pointer-events: none;
     z-index: 9999;
   }
   
   .luxury-button {
-    @apply relative overflow-hidden px-8 py-4 bg-transparent border border-amber-200/20 text-amber-100 uppercase tracking-[0.3em] text-xs font-medium transition-all duration-500 hover:border-amber-200 hover:text-white;
+    @apply relative overflow-hidden px-10 py-5 bg-transparent border border-stone-700 text-stone-100 uppercase tracking-[0.4em] text-[9px] font-semibold transition-all duration-700 hover:border-stone-50 hover:bg-stone-50 hover:text-black;
   }
+
+  .text-reveal {
+    @apply relative overflow-hidden block;
+  }
+
+  .glass-card {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-white/5;
+  }
+}
+
+/* Page masking for smoother transitions */
+.page-mask {
+  mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 2px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-zinc-950;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-amber-200/20 hover:bg-amber-200/40 transition-colors;
+  @apply bg-stone-800 hover:bg-stone-600 transition-colors;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
