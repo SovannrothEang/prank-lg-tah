@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { auth } = require('../middleware/auth');
+const { auth, managerOnly } = require('../middleware/auth');
 const { validate, menuItemSchema } = require('../middleware/validate');
 const AuditService = require('../services/AuditService');
 
@@ -14,7 +14,7 @@ module.exports = (db) => {
         res.render('restaurant-admin', { page: 'restaurant', menu, error: req.query.error || null });
     });
 
-    router.post('/restaurant-admin', checkAuth, validate(menuItemSchema), async (req, res) => {
+    router.post('/restaurant-admin', checkAuth, managerOnly, validate(menuItemSchema), async (req, res) => {
         const { id, category, name, description, price, is_available } = req.validatedBody;
         try {
             if (id) {
@@ -36,7 +36,7 @@ module.exports = (db) => {
     });
 
     // Delete menu item
-    router.post('/restaurant-admin/:id/delete', checkAuth, async (req, res) => {
+    router.post('/restaurant-admin/:id/delete', checkAuth, managerOnly, async (req, res) => {
         try {
             const item = await db.get('SELECT * FROM menu_items WHERE id = ?', [req.params.id]);
             if (!item) throw new Error('Menu item not found');

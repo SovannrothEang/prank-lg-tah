@@ -5,7 +5,9 @@
         <h2 class="font-serif mb-1">Rooms Inventory</h2>
         <span class="text-muted small"><%= pagination.totalRecords %> rooms</span>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal">+ Add Room</button>
+    <% if (user.role === 'admin' || user.role === 'manager') { %>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal">+ Add Room</button>
+    <% } %>
 </div>
 
 <!-- Search & Filter -->
@@ -40,7 +42,9 @@
                 <th>Type</th>
                 <th>Status</th>
                 <th>Visibility</th>
-                <th class="text-end pe-4">Actions</th>
+                <% if (user.role === 'admin' || user.role === 'manager') { %>
+                    <th class="text-end pe-4">Actions</th>
+                <% } %>
             </tr>
         </thead>
         <tbody>
@@ -58,16 +62,18 @@
                         <%= room.is_active ? 'Live' : 'Hidden' %>
                     </span>
                 </td>
-                <td class="text-end pe-4">
-                    <div class="d-flex gap-1 justify-content-end">
-                        <button class="btn btn-sm btn-outline-dark" onclick="editRoom('<%- JSON.stringify(room).replace(/'/g, "\\'") %>')">Edit</button>
-                        <% if (room.status !== 'occupied') { %>
-                            <form action="/rooms/<%= room.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete room <%= room.room_number %>?')">
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        <% } %>
-                    </div>
-                </td>
+                <% if (user.role === 'admin' || user.role === 'manager') { %>
+                    <td class="text-end pe-4">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <button class="btn btn-sm btn-outline-dark" onclick="editRoom('<%- JSON.stringify(room).replace(/'/g, "\\'") %>')">Edit</button>
+                            <% if (room.status !== 'occupied') { %>
+                                <form action="/rooms/<%= room.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete room <%= room.room_number %>?')">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </td>
+                <% } %>
             </tr>
             <% }) %>
             <% if (rooms.length === 0) { %>

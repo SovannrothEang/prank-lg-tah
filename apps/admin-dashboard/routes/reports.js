@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const ExcelJS = require('exceljs');
-const { auth } = require('../middleware/auth');
+const { auth, managerOnly } = require('../middleware/auth');
 
 module.exports = (db) => {
     const checkAuth = auth(db);
 
-    router.get('/reports', checkAuth, async (req, res) => {
+    router.get('/reports', checkAuth, managerOnly, async (req, res) => {
         const analytics = {
             revenueByType: await db.all(`
                 SELECT rt.name, SUM(b.total_price) as total 

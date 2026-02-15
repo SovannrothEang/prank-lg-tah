@@ -78,7 +78,12 @@ async function handleRefresh(req, res, next, db, refreshToken) {
 
 const adminOnly = (req, res, next) => {
     if (res.locals.user && res.locals.user.role === 'admin') return next();
-    res.status(403).send('Access Denied: Administrators only');
+    res.status(403).render('error', { message: 'Access Denied: Administrators only', status: 403 });
 };
 
-module.exports = { auth, adminOnly };
+const managerOnly = (req, res, next) => {
+    if (res.locals.user && (res.locals.user.role === 'admin' || res.locals.user.role === 'manager')) return next();
+    res.status(403).render('error', { message: 'Access Denied: Management authorization required', status: 403 });
+};
+
+module.exports = { auth, adminOnly, managerOnly };

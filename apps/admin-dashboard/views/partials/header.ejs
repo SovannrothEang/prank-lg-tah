@@ -91,8 +91,10 @@
         <a href="/restaurant-admin" class="<%= (locals.page === 'restaurant') ? 'active' : '' %>">Restaurant Menu</a>
         <a href="/payments" class="<%= (locals.page === 'payments') ? 'active' : '' %>">Payments</a>
         
-        <div class="nav-section">Intelligence</div>
-        <a href="/reports" class="<%= (locals.page === 'reports') ? 'active' : '' %>">Reports & Analytics</a>
+        <% if (locals.user && (user.role === 'admin' || user.role === 'manager')) { %>
+            <div class="nav-section">Intelligence</div>
+            <a href="/reports" class="<%= (locals.page === 'reports') ? 'active' : '' %>">Reports & Analytics</a>
+        <% } %>
         
         <% if (locals.user && user.role === 'admin') { %>
             <div class="nav-section">Administration</div>

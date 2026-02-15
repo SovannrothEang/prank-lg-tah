@@ -5,7 +5,9 @@
         <h2 class="font-serif mb-1">Culinary Management</h2>
         <p class="text-muted small mb-0">Digital Menu Curator</p>
     </div>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal">+ New Menu Entry</button>
+    <% if (user.role === 'admin' || user.role === 'manager') { %>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal">+ New Menu Entry</button>
+    <% } %>
 </div>
 
 <div class="row">
@@ -19,7 +21,9 @@
                         <th class="ps-4" style="width: 40%">Item</th>
                         <th class="text-center" style="width: 20%">Price</th>
                         <th class="text-center" style="width: 20%">Visibility</th>
-                        <th class="text-end pe-4" style="width: 20%">Actions</th>
+                        <% if (user.role === 'admin' || user.role === 'manager') { %>
+                            <th class="text-end pe-4" style="width: 20%">Actions</th>
+                        <% } %>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,14 +39,16 @@
                                 <%= item.is_available ? 'Live' : 'Hidden' %>
                             </span>
                         </td>
-                        <td class="text-end pe-4">
-                            <div class="d-flex gap-1 justify-content-end">
-                                <button class="btn btn-sm btn-outline-dark" onclick="editItem('<%- JSON.stringify(item).replace(/'/g, "\\'") %>')">Edit</button>
-                                <form action="/restaurant-admin/<%= item.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this item?')">
-                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                </form>
-                            </div>
-                        </td>
+                        <% if (user.role === 'admin' || user.role === 'manager') { %>
+                            <td class="text-end pe-4">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <button class="btn btn-sm btn-outline-dark" onclick="editItem('<%- JSON.stringify(item).replace(/'/g, "\\'") %>')">Edit</button>
+                                    <form action="/restaurant-admin/<%= item.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this item?')">
+                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        <% } %>
                     </tr>
                     <% }) %>
                     <% if (menu.filter(i => i.category === cat).length === 0) { %>

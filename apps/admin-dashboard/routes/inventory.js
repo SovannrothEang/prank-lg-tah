@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { auth } = require('../middleware/auth');
+const { auth, managerOnly } = require('../middleware/auth');
 const { validate, roomTypeSchema, roomSchema } = require('../middleware/validate');
 const AuditService = require('../services/AuditService');
 
@@ -15,7 +15,7 @@ module.exports = (db) => {
         res.render('room-types', { page: 'room-types', types, error: req.query.error || null });
     });
 
-    router.post('/room-types', checkAuth, validate(roomTypeSchema), async (req, res) => {
+    router.post('/room-types', checkAuth, managerOnly, validate(roomTypeSchema), async (req, res) => {
         const { id, name, description, base_price, is_active } = req.validatedBody;
         try {
             if (id) {
@@ -37,7 +37,7 @@ module.exports = (db) => {
     });
 
     // Soft-delete room type
-    router.post('/room-types/:id/delete', checkAuth, async (req, res) => {
+    router.post('/room-types/:id/delete', checkAuth, managerOnly, async (req, res) => {
         try {
             const type = await db.get('SELECT * FROM room_types WHERE id = ?', [req.params.id]);
             if (!type) throw new Error('Room type not found');
@@ -95,7 +95,7 @@ module.exports = (db) => {
         });
     });
 
-    router.post('/rooms', checkAuth, validate(roomSchema), async (req, res) => {
+    router.post('/rooms', checkAuth, managerOnly, validate(roomSchema), async (req, res) => {
         const { id, room_number, room_type_id, status, is_active } = req.validatedBody;
         try {
             if (id) {
@@ -121,7 +121,7 @@ module.exports = (db) => {
     });
 
     // Soft-delete room
-    router.post('/rooms/:id/delete', checkAuth, async (req, res) => {
+    router.post('/rooms/:id/delete', checkAuth, managerOnly, async (req, res) => {
         try {
             const room = await db.get('SELECT * FROM rooms WHERE id = ?', [req.params.id]);
             if (!room) throw new Error('Room not found');

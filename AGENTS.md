@@ -55,7 +55,10 @@ Execute these from the project root:
   - `errorResponse(res, message, errorCode, statusCode)`
 - **Validation**: Every POST/PUT route must use Zod schemas in `middleware/validate.js`.
 - **Authentication**: JWT-based. Access (1h) and Refresh (7d) tokens in HttpOnly cookies.
-  - Refresh tokens are stored in the `refresh_tokens` table for revocation.
+- **RBAC**: Use `adminOnly` and `managerOnly` middlewares from `middleware/auth.js`.
+  - `staff`: Basic operations (Bookings, POS, Housekeeping). Cannot see reports or modify inventory/menu.
+  - `manager`: Can modify inventory/menu and see reports.
+  - `admin`: Full system access including staff management and database tools.
 
 ### Frontend Architecture (`apps/guest-site`)
 - **Framework**: React 19 (Functional Components + Hooks).

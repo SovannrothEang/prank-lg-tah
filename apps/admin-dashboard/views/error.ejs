@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+
+<div class="d-flex flex-column align-items-center justify-content-center py-5">
+    <div class="text-center">
+        <h1 class="font-serif display-1 text-muted opacity-25"><%= locals.status || 500 %></h1>
+        <h3 class="font-serif mb-4"><%= locals.message || 'An unexpected error occurred' %></h3>
+        <p class="text-muted mb-5">If you believe this is an error, please contact the system administrator.</p>
+        <a href="/" class="btn btn-dark px-5 py-3">RETURN TO DASHBOARD</a>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

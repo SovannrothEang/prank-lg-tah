@@ -2,7 +2,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-5">
     <h2 class="font-serif">Room Type Portfolio</h2>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#typeModal">+ Define New Type</button>
+    <% if (user.role === 'admin' || user.role === 'manager') { %>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#typeModal">+ Define New Type</button>
+    <% } %>
 </div>
 
 <div class="row g-4">
@@ -16,12 +18,14 @@
             <p class="text-muted small mb-4" style="min-height: 40px;"><%= type.description || 'No description' %></p>
             <div class="d-flex justify-content-between align-items-center">
                 <span class="fs-4 fw-bold text-primary">$<%= type.base_price %></span>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-dark" onclick="editType('<%- JSON.stringify(type).replace(/'/g, "\\'") %>')">Edit</button>
-                    <form action="/room-types/<%= type.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this room type?')">
-                        <button class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                </div>
+                <% if (user.role === 'admin' || user.role === 'manager') { %>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-dark" onclick="editType('<%- JSON.stringify(type).replace(/'/g, "\\'") %>')">Edit</button>
+                        <form action="/room-types/<%= type.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this room type?')">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
